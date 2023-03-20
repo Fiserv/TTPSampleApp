@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		365B090829C8EA7E004FC99D /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 365B090729C8EA7E004FC99D /* README.md */; };
 		367B212929C8D68500200B96 /* FiservTTP in Frameworks */ = {isa = PBXBuildFile; productRef = 367B212829C8D68500200B96 /* FiservTTP */; };
 		D45C7A0029C0CA0B004E40E6 /* FiservTTPTestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D45C79FF29C0CA0B004E40E6 /* FiservTTPTestApp.swift */; };
 		D45C7A0229C0CA0B004E40E6 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D45C7A0129C0CA0B004E40E6 /* ContentView.swift */; };
@@ -17,6 +18,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		365B090729C8EA7E004FC99D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		367B211129C263F000200B96 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D45C79FC29C0CA0B004E40E6 /* FiservTTPTestApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FiservTTPTestApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D45C79FF29C0CA0B004E40E6 /* FiservTTPTestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiservTTPTestApp.swift; sourceTree = "<group>"; };
@@ -45,6 +47,7 @@
 		D45C79F329C0CA0B004E40E6 = {
 			isa = PBXGroup;
 			children = (
+				365B090729C8EA7E004FC99D /* README.md */,
 				D45C7A0E29C0CAAC004E40E6 /* Entitlements.plist */,
 				D45C79FE29C0CA0B004E40E6 /* FiservTTPTestApp */,
 				D45C79FD29C0CA0B004E40E6 /* Products */,
@@ -162,6 +165,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				365B090829C8EA7E004FC99D /* README.md in Resources */,
 				D45C7A0429C0CA0C004E40E6 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
