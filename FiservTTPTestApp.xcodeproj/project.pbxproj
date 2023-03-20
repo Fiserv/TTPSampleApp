@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		367B212629C8D5A100200B96 /* FiservTTP in Frameworks */ = {isa = PBXBuildFile; productRef = 367B212529C8D5A100200B96 /* FiservTTP */; };
+		367B212929C8D68500200B96 /* FiservTTP in Frameworks */ = {isa = PBXBuildFile; productRef = 367B212829C8D68500200B96 /* FiservTTP */; };
 		D45C7A0029C0CA0B004E40E6 /* FiservTTPTestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D45C79FF29C0CA0B004E40E6 /* FiservTTPTestApp.swift */; };
 		D45C7A0229C0CA0B004E40E6 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D45C7A0129C0CA0B004E40E6 /* ContentView.swift */; };
 		D45C7A0429C0CA0C004E40E6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D45C7A0329C0CA0C004E40E6 /* Assets.xcassets */; };
@@ -34,7 +34,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				367B212629C8D5A100200B96 /* FiservTTP in Frameworks */,
+				367B212929C8D68500200B96 /* FiservTTP in Frameworks */,
 				D45C7A1929C0D236004E40E6 /* ProximityReader.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -115,7 +115,7 @@
 			);
 			name = FiservTTPTestApp;
 			packageProductDependencies = (
-				367B212529C8D5A100200B96 /* FiservTTP */,
+				367B212829C8D68500200B96 /* FiservTTP */,
 			);
 			productName = FiservTTPTestApp;
 			productReference = D45C79FC29C0CA0B004E40E6 /* FiservTTPTestApp.app */;
@@ -146,7 +146,7 @@
 			);
 			mainGroup = D45C79F329C0CA0B004E40E6;
 			packageReferences = (
-				367B212429C8D5A100200B96 /* XCRemoteSwiftPackageReference "TTPPackage" */,
+				367B212729C8D68500200B96 /* XCRemoteSwiftPackageReference "TTPPackage" */,
 			);
 			productRefGroup = D45C79FD29C0CA0B004E40E6 /* Products */;
 			projectDirPath = "";
@@ -402,7 +402,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		367B212429C8D5A100200B96 /* XCRemoteSwiftPackageReference "TTPPackage" */ = {
+		367B212729C8D68500200B96 /* XCRemoteSwiftPackageReference "TTPPackage" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Fiserv/TTPPackage";
 			requirement = {
@@ -413,9 +413,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		367B212529C8D5A100200B96 /* FiservTTP */ = {
+		367B212829C8D68500200B96 /* FiservTTP */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 367B212429C8D5A100200B96 /* XCRemoteSwiftPackageReference "TTPPackage" */;
+			package = 367B212729C8D68500200B96 /* XCRemoteSwiftPackageReference "TTPPackage" */;
 			productName = FiservTTP;
 		};
 /* End XCSwiftPackageProductDependency section */
