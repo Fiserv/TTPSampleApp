@@ -68,5 +68,84 @@
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "8066AB84-3116-42A2-A06D-06D44DFBB3A0"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../Library/Developer/Xcode/DerivedData/FiservTTPTestApp-fvbtuabjaojhekfhkxhfkqbusdxa/SourcePackages/checkouts/TTPPackage/Sources/FiservTTP/FiservTTPServices.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "229"
+            endingLineNumber = "229"
+            landmarkName = "charge(amount:currencyCode:merchantOrderId:merchantTransactionId:paymentCardReaderId:paymentCardReadResult:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "8066AB84-3116-42A2-A06D-06D44DFBB3A0 - 54b653d52c55ea8d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(1) suspend resume partial function for FiservTTP.FiservTTPServices.charge(amount: __C.NSDecimal, currencyCode: Swift.String, merchantOrderId: Swift.String, merchantTransactionId: Swift.String, paymentCardReaderId: Swift.String, paymentCardReadResult: ProximityReader.PaymentCardReadResult) async -&gt; Swift.Result&lt;FiservTTP.FiservTTPChargeResponse, FiservTTP.FiservTTPRequestError&gt;"
+                  moduleName = "FiservTTPTestApp"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/richard.tilt/Library/Developer/Xcode/DerivedData/FiservTTPTestApp-fvbtuabjaojhekfhkxhfkqbusdxa/SourcePackages/checkouts/TTPPackage/Sources/FiservTTP/FiservTTPServices.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "229"
+                  endingLineNumber = "229"
+                  offsetFromSymbolStart = "212">
+               </Location>
+               <Location
+                  uuid = "8066AB84-3116-42A2-A06D-06D44DFBB3A0 - 9de659c2e37a0ea2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(2) await resume partial function for FiservTTP.FiservTTPServices.charge(amount: __C.NSDecimal, currencyCode: Swift.String, merchantOrderId: Swift.String, merchantTransactionId: Swift.String, paymentCardReaderId: Swift.String, paymentCardReadResult: ProximityReader.PaymentCardReadResult) async -&gt; Swift.Result&lt;FiservTTP.FiservTTPChargeResponse, FiservTTP.FiservTTPRequestError&gt;"
+                  moduleName = "FiservTTPTestApp"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/richard.tilt/Library/Developer/Xcode/DerivedData/FiservTTPTestApp-fvbtuabjaojhekfhkxhfkqbusdxa/SourcePackages/checkouts/TTPPackage/Sources/FiservTTP/FiservTTPServices.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "229"
+                  endingLineNumber = "229"
+                  offsetFromSymbolStart = "40">
+               </Location>
+               <Location
+                  uuid = "8066AB84-3116-42A2-A06D-06D44DFBB3A0 - f6aafbf9d6b2a683"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(3) suspend resume partial function for FiservTTP.FiservTTPServices.charge(amount: __C.NSDecimal, currencyCode: Swift.String, merchantOrderId: Swift.String, merchantTransactionId: Swift.String, paymentCardReaderId: Swift.String, paymentCardReadResult: ProximityReader.PaymentCardReadResult) async -&gt; Swift.Result&lt;FiservTTP.FiservTTPChargeResponse, FiservTTP.FiservTTPRequestError&gt;"
+                  moduleName = "FiservTTPTestApp"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/richard.tilt/Library/Developer/Xcode/DerivedData/FiservTTPTestApp-fvbtuabjaojhekfhkxhfkqbusdxa/SourcePackages/checkouts/TTPPackage/Sources/FiservTTP/FiservTTPServices.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "229"
+                  endingLineNumber = "229"
+                  offsetFromSymbolStart = "104">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "66F3797F-8A2B-4ABB-A219-B1A1A3245561"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../Library/Developer/Xcode/DerivedData/FiservTTPTestApp-fvbtuabjaojhekfhkxhfkqbusdxa/SourcePackages/checkouts/TTPPackage/Sources/FiservTTP/FiservTTPCardReader.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "65"
+            endingLineNumber = "65"
+            landmarkName = "init(configuration:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
    </Breakpoints>
 </Bucket>

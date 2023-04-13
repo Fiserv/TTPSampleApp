@@ -8,7 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		365B090829C8EA7E004FC99D /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 365B090729C8EA7E004FC99D /* README.md */; };
+		367774A429E83C28006F332C /* ConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 367774A329E83C28006F332C /* ConfigurationView.swift */; };
+		367774A629E84215006F332C /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 367774A529E84215006F332C /* Configuration.swift */; };
 		367B212929C8D68500200B96 /* FiservTTP in Frameworks */ = {isa = PBXBuildFile; productRef = 367B212829C8D68500200B96 /* FiservTTP */; };
+		36D794B629E85F3900681803 /* TTPView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36D794B529E85F3900681803 /* TTPView.swift */; };
 		D45C7A0029C0CA0B004E40E6 /* FiservTTPTestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D45C79FF29C0CA0B004E40E6 /* FiservTTPTestApp.swift */; };
 		D45C7A0229C0CA0B004E40E6 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D45C7A0129C0CA0B004E40E6 /* ContentView.swift */; };
 		D45C7A0429C0CA0C004E40E6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D45C7A0329C0CA0C004E40E6 /* Assets.xcassets */; };
@@ -19,7 +22,10 @@
 
 /* Begin PBXFileReference section */
 		365B090729C8EA7E004FC99D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		367774A329E83C28006F332C /* ConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationView.swift; sourceTree = "<group>"; };
+		367774A529E84215006F332C /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
 		367B211129C263F000200B96 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		36D794B529E85F3900681803 /* TTPView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTPView.swift; sourceTree = "<group>"; };
 		D45C79FC29C0CA0B004E40E6 /* FiservTTPTestApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FiservTTPTestApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D45C79FF29C0CA0B004E40E6 /* FiservTTPTestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiservTTPTestApp.swift; sourceTree = "<group>"; };
 		D45C7A0129C0CA0B004E40E6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -89,6 +95,8 @@
 			children = (
 				D45C7A0129C0CA0B004E40E6 /* ContentView.swift */,
 				D4CF639629C0F3490017DFF3 /* TTPProgressView.swift */,
+				367774A329E83C28006F332C /* ConfigurationView.swift */,
+				36D794B529E85F3900681803 /* TTPView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -97,6 +105,7 @@
 			isa = PBXGroup;
 			children = (
 				D45C7A1329C0CC3B004E40E6 /* FiservTTPViewModel.swift */,
+				367774A529E84215006F332C /* Configuration.swift */,
 			);
 			path = "View Models";
 			sourceTree = "<group>";
@@ -177,7 +186,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				367774A629E84215006F332C /* Configuration.swift in Sources */,
 				D4CF639729C0F3490017DFF3 /* TTPProgressView.swift in Sources */,
+				367774A429E83C28006F332C /* ConfigurationView.swift in Sources */,
+				36D794B629E85F3900681803 /* TTPView.swift in Sources */,
 				D45C7A1429C0CC3B004E40E6 /* FiservTTPViewModel.swift in Sources */,
 				D45C7A0229C0CA0B004E40E6 /* ContentView.swift in Sources */,
 				D45C7A0029C0CA0B004E40E6 /* FiservTTPTestApp.swift in Sources */,
