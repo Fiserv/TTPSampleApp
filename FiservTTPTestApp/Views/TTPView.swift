@@ -51,7 +51,8 @@ struct TTPView: View {
     @Binding var isShowingConfig: Bool
 
     // Default value for charging a card
-    @State private var amount: String = "5.00"
+    // @State private var amount: String = "0.00"
+    @State private var amount = 0.00
     
     // For ease in displaying the result of a readCard request
     @State private var chargeReponseWrapper: FiservTTPResponseWrapper?
@@ -189,24 +190,24 @@ struct TTPView: View {
                 }
 
                 Section("5. Accept a TTP Payment") {
-                    TextField("Amount:", text: $amount)
+                    
+                    TextField("Amount", value: $amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
                         .keyboardType(.decimalPad)
-
+                    
                     Button("Accept Payment",action: {
-
+                        
                         Task {
-                            if let decimalValue = Decimal(string:amount) {
 
-                                do {
-                                    let chargeResponse = try await viewModel.readCard(amount: decimalValue, merchantOrderId: "oid123", merchantTransactionId: "tid987")
-                                    chargeReponseWrapper = FiservTTPResponseWrapper(response: chargeResponse)
-                                } catch let error as FiservTTPCardReaderError {
-                                    errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you initialize the reader?")
-                                }
-                            } else {
-                                print("String does not contain Decimal value")
-                                return
+                            do {
+                                let chargeResponse = try await viewModel.readCard(amount: Decimal(self.amount), merchantOrderId: "oid123", merchantTransactionId: "tid987")
+                                
+                                chargeReponseWrapper = FiservTTPResponseWrapper(response: chargeResponse)
+                                
+                            } catch let error as FiservTTPCardReaderError {
+                                errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you initialize the reader?")
                             }
+                            
+                            self.amount = 0.00
                         }
                     }).buttonStyle(BorderlessButtonStyle())
                 }
