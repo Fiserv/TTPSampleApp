@@ -149,6 +149,38 @@ class FiservTTPViewModel: ObservableObject {
             throw error
         }
     }
+    
+    // VOID TRANSACTION
+    public func voidTransaction(amount: Decimal, transactionId: String) async throws -> FiservTTPChargeResponse {
+        
+        do {
+            await MainActor.run { self.isBusy = true }
+             
+            let response = try await self.fiservTTPCardReader.voidTransaction(amount: amount, transactionId: transactionId)
+            
+            await MainActor.run { self.isBusy = false }
+            return response
+        } catch {
+            await MainActor.run { self.isBusy = false }
+            throw error
+        }
+    }
+    
+    // REFUND TRANSACTION
+    public func refundTransaction(amount: Decimal, transactionId: String) async throws -> FiservTTPChargeResponse {
+        
+        do {
+            await MainActor.run { self.isBusy = true }
+             
+            let response = try await self.fiservTTPCardReader.refundTransaction(amount: amount, transactionId: transactionId)
+            
+            await MainActor.run { self.isBusy = false }
+            return response
+        } catch {
+            await MainActor.run { self.isBusy = false }
+            throw error
+        }
+    }
 }
 
 

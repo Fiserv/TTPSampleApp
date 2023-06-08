@@ -21,6 +21,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		360CB5DE2A279DD800325368 /* TTPPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = TTPPackage; path = ../TTPPackage; sourceTree = "<group>"; };
 		365B090729C8EA7E004FC99D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		367774A329E83C28006F332C /* ConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationView.swift; sourceTree = "<group>"; };
 		367774A529E84215006F332C /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
@@ -86,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				D45C7A1829C0D236004E40E6 /* ProximityReader.framework */,
+				360CB5DE2A279DD800325368 /* TTPPackage */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
