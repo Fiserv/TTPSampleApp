@@ -54,8 +54,10 @@ struct TTPView: View {
     // @State private var amount: String = "0.00"
     @State private var amount = 0.00
     
+    @State private var transactionId = ""
+    
     // For ease in displaying the result of a readCard request
-    @State private var chargeReponseWrapper: FiservTTPResponseWrapper?
+    @State private var reponseWrapper: FiservTTPResponseWrapper?
     
     // Error handling and displaying
     @State private var errorWrapper: FiservTTPErrorWrapper?
@@ -201,7 +203,9 @@ struct TTPView: View {
                             do {
                                 let chargeResponse = try await viewModel.readCard(amount: Decimal(self.amount), merchantOrderId: "oid123", merchantTransactionId: "tid987")
                                 
-                                chargeReponseWrapper = FiservTTPResponseWrapper(response: chargeResponse)
+                                reponseWrapper = FiservTTPResponseWrapper(title: "Charge Response", response: chargeResponse)
+                                
+                                self.transactionId = chargeResponse.gatewayResponse?.transactionProcessingDetails?.transactionId ?? ""
                                 
                             } catch let error as FiservTTPCardReaderError {
                                 errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you initialize the reader?")
@@ -209,6 +213,67 @@ struct TTPView: View {
                             
                             self.amount = 0.00
                         }
+                    }).buttonStyle(BorderlessButtonStyle())
+                }
+                
+                Section("6. Void a TTP Payment") {
+                    
+                    TextField("Amount", value: $amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                        .keyboardType(.decimalPad)
+                    
+                    TextField("TransactionId", text: $transactionId)
+                        .keyboardType(.default)
+                    
+                    Button("Void Transaction", action: {
+                        
+                        Task {
+                            
+                            do {
+                                
+                                let response = try await viewModel.voidTransaction(amount: Decimal(self.amount), transactionId: self.transactionId)
+                                
+                                reponseWrapper = FiservTTPResponseWrapper(title: "Void Response", response: response)
+                                
+                            } catch let error as FiservTTPCardReaderError {
+                                
+                                errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you use the correct transactionId?")
+                            }
+                            
+                            self.amount = 0.00
+                            
+                            self.transactionId = ""
+                        }
+                    }).buttonStyle(BorderlessButtonStyle())
+                }
+                
+                Section("7. Refund a TTP Payment") {
+                    
+                    TextField("Amount", value: $amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                        .keyboardType(.decimalPad)
+                    
+                    TextField("TransactionId", text: $transactionId)
+                        .keyboardType(.default)
+                    
+                    Button("Refund Transaction", action: {
+                        
+                        Task {
+                            
+                            do {
+                                
+                                let response = try await viewModel.refundTransaction(amount: Decimal(self.amount), transactionId: self.transactionId)
+                                
+                                reponseWrapper = FiservTTPResponseWrapper(title: "Refund Response", response: response)
+                                
+                            } catch let error as FiservTTPCardReaderError {
+                                
+                                errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you use the correct transactionId?")
+                            }
+                            
+                            self.amount = 0.00
+                            
+                            self.transactionId = ""
+                        }
+                        
                     }).buttonStyle(BorderlessButtonStyle())
                 }
             }
@@ -237,7 +302,7 @@ struct TTPView: View {
                     }
                 }
             }
-            .sheet(item: $chargeReponseWrapper) { wrapper in
+            .sheet(item: $reponseWrapper) { wrapper in
 
                 FiservTTPChargeResponseView(responseWrapper: wrapper)
             }
@@ -266,7 +331,7 @@ struct FiservTTPChargeResponseView: View {
                 
                 if let response = responseWrapper?.response {
                     
-                    Text("Charge Response")
+                    Text(responseWrapper?.title ?? "Server Response")
                         .font(.title)
                         .padding(.bottom)
                     
