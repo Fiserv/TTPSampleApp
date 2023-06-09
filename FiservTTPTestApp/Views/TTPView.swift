@@ -230,7 +230,8 @@ struct TTPView: View {
                             
                             do {
                                 
-                                let response = try await viewModel.voidTransaction(amount: Decimal(self.amount), transactionId: self.transactionId)
+                                let response = try await viewModel.voidTransaction(amount: Decimal(self.amount),
+                                                                                   referenceTransactionId: self.transactionId)
                                 
                                 reponseWrapper = FiservTTPResponseWrapper(title: "Void Response", response: response)
                                 
@@ -260,7 +261,8 @@ struct TTPView: View {
                             
                             do {
                                 
-                                let response = try await viewModel.refundTransaction(amount: Decimal(self.amount), transactionId: self.transactionId)
+                                let response = try await viewModel.refundTransaction(amount: Decimal(self.amount),
+                                                                                     referenceTransactionId: self.transactionId)
                                 
                                 reponseWrapper = FiservTTPResponseWrapper(title: "Refund Response", response: response)
                                 
