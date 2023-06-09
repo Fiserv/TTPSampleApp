@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Fiserv/TTPPackage",
       "state" : {
-        "revision" : "4848ddc58bb32f5a165155f4e8dbd8d60e3ccbee",
-        "version" : "0.0.5"
+        "revision" : "b1b4dd2672e6d603a9e014c0a1729474aa8a2b57",
+        "version" : "0.0.6"
       }
     }
   ],
