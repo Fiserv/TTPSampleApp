@@ -137,11 +137,10 @@ class FiservTTPViewModel: ObservableObject {
                          merchantTransactionId: String) async throws -> FiservTTPChargeResponse {
         do {
             await MainActor.run { self.isBusy = true }
-            let response = try await self.fiservTTPCardReader.readCard(amount: amount,
+
+            let response = try await self.fiservTTPCardReader.readCard(amount: bankersAmount(amount: amount),
                                                                        merchantOrderId: merchantOrderId,
                                                                        merchantTransactionId: merchantTransactionId)
-            
-            
             await MainActor.run { self.isBusy = false }
             return response
         } catch {
@@ -159,13 +158,12 @@ class FiservTTPViewModel: ObservableObject {
         
         do {
             await MainActor.run { self.isBusy = true }
-             
-            let response = try await self.fiservTTPCardReader.voidTransaction(amount: amount,
+
+            let response = try await self.fiservTTPCardReader.voidTransaction(amount: bankersAmount(amount: amount),
                                                                             referenceTransactionId: referenceTransactionId,
                                                                             referenceOrderId: referenceOrderId,
                                                                             referenceMerchantTransactionId: referenceMerchantTransactionId,
                                                                             referenceMerchantOrderId: referenceMerchantOrderId)
-            
             await MainActor.run { self.isBusy = false }
             return response
         } catch {
@@ -184,7 +182,7 @@ class FiservTTPViewModel: ObservableObject {
         do {
             await MainActor.run { self.isBusy = true }
              
-            let response = try await self.fiservTTPCardReader.refundTransaction(amount: amount,
+            let response = try await self.fiservTTPCardReader.refundTransaction(amount: bankersAmount(amount: amount),
                                                                                 referenceTransactionId: referenceTransactionId,
                                                                                 referenceOrderId: referenceOrderId,
                                                                                 referenceMerchantTransactionId: referenceMerchantTransactionId,
@@ -197,8 +195,27 @@ class FiservTTPViewModel: ObservableObject {
             throw error
         }
     }
+
+    private func bankersAmount(amount: Decimal) -> Decimal {
+        
+        return amount.rounded(2, .bankers)
+    }
 }
 
+extension Decimal {
+    
+    mutating func round(_ scale: Int, _ roundingMode: NSDecimalNumber.RoundingMode) {
+        var localCopy = self
+        NSDecimalRound(&self, &localCopy, scale, roundingMode)
+    }
+
+    func rounded(_ scale: Int, _ roundingMode: NSDecimalNumber.RoundingMode) -> Decimal {
+        var result = Decimal()
+        var localCopy = self
+        NSDecimalRound(&result, &localCopy, scale, roundingMode)
+        return result
+    }
+}
 
 extension FiservTTPViewModel {
 
