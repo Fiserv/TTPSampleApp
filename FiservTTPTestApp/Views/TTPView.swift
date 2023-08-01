@@ -241,9 +241,8 @@ struct TTPView: View {
                             }
                             
                             self.amount = 0.00
-                            
-                            self.transactionId = ""
                         }
+                        
                     }).buttonStyle(BorderlessButtonStyle())
                 }
                 
@@ -272,8 +271,6 @@ struct TTPView: View {
                             }
                             
                             self.amount = 0.00
-                            
-                            self.transactionId = ""
                         }
                         
                     }).buttonStyle(BorderlessButtonStyle())
