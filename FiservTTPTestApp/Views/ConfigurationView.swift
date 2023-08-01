@@ -102,6 +102,9 @@ struct ConfigurationView: View {
                     Button {
                         isPresented = false
                     } label: {
+                        
+                        Text("Application v0.0.8")
+                        
                         Text("Done")
                     }
                     Spacer()
