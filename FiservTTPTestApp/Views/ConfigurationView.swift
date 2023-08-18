@@ -103,7 +103,7 @@ struct ConfigurationView: View {
                         isPresented = false
                     } label: {
                         
-                        Text("Application v0.0.8")
+                        Text("Application v0.0.9")
                         
                         Text("Done")
                     }
