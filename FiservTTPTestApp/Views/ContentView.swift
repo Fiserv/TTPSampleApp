@@ -40,7 +40,8 @@ struct ContentView: View {
             TTPView(isShowingConfig: $showingConfig,
                     viewModel: FiservTTPViewModel(configuration: configuration),
                     merchantId: configuration.merchantId,
-                    merchantName: configuration.merchantName)
+                    merchantName: configuration.merchantName,
+                    appleTtpMerchantId: configuration.appleTtpMerchantId ?? String())
         }
     }
 }
