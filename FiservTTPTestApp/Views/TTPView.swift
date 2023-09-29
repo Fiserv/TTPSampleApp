@@ -71,6 +71,7 @@ struct TTPView: View {
     
     let merchantId: String
     let merchantName: String
+    let appleTtpMerchantId: String
     
     var body: some View {
         
@@ -116,6 +117,8 @@ struct TTPView: View {
                     Text(self.merchantId)
 
                     Text(self.merchantName)
+                    
+                    Text(self.appleTtpMerchantId.isEmpty ? "Apple MID Optional" : self.appleTtpMerchantId)
                 }
 
                 if( viewModel.isBusy == true ) {
@@ -410,6 +413,7 @@ struct TTPView_Previews: PreviewProvider {
         TTPView(isShowingConfig: .constant(true),
                 viewModel: FiservTTPViewModel(configuration: Configuration()),
                 merchantId: "190009000000700",
-                merchantName: "Tom's Tacos")
+                merchantName: "Tom's Tacos",
+                appleTtpMerchantId: String())
     }
 }

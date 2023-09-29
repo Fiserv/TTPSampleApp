@@ -226,6 +226,7 @@ extension FiservTTPViewModel {
                                     environment: config.environment,
                                     currencyCode: config.currencyCode,
                                     merchantId: config.merchantId,
+                                    appleTtpMerchantId: config.appleTtpMerchantId,
                                     merchantName: config.merchantName,
                                     merchantCategoryCode: config.merchantCategoryCode,
                                     terminalId: config.terminalId,

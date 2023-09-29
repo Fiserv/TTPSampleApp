@@ -14,6 +14,7 @@ class Configuration: ObservableObject {
     @Published var apiKey: String = "0JvVe4QCtT3srMmflNuUrs1zxZLswmmi"
     let environment: FiservTTPEnvironment = .Sandbox
     let currencyCode: String = "USD"
+    @Published var appleTtpMerchantId: String?
     @Published var merchantId: String = "190009000000700"
     @Published var merchantName: String = "Tom's Tacos"
     @Published var merchantCategoryCode: String = "1000"

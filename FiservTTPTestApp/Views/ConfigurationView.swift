@@ -56,22 +56,33 @@ struct ConfigurationView: View {
                         
                         Group {
                             
-                            Text("Merchant Name")
-                            TextField("Merchant Name", text: $configuration.merchantName)
-                                .foregroundColor(.blue)
-                            Divider()
+                            Group {
+                                Text("Merchant Name")
+                                TextField("Merchant Name", text: $configuration.merchantName)
+                                    .foregroundColor(.blue)
+                                Divider()
+                                
+                                Text("Merchant ID")
+                                TextField("Merchant ID", text: $configuration.merchantId)
+                                    .foregroundColor(.blue)
+                                    .keyboardType(.numberPad)
+                                
+                                Divider()
+                            }
                             
-                            Text("Merchant ID")
-                            TextField("Merchant ID", text: $configuration.merchantId)
-                                .foregroundColor(.blue)
-                                .keyboardType(.numberPad)
-                            
-                            Divider()
-                            
-                            Text("Terminal ID")
-                            TextField("Terminal ID", text: $configuration.terminalId)
-                                .foregroundColor(.blue)
-                                .keyboardType(.numberPad)
+                            Group {
+                                
+                                Text("Apple TTP Merchant ID")
+                                TextField("Apple TTP Merchant ID", text: Binding($configuration.appleTtpMerchantId, replacingNilWith: "Optional"))
+                                    .foregroundColor(.blue)
+                                
+                                Divider()
+                                
+                                Text("Terminal ID")
+                                TextField("Terminal ID", text: $configuration.terminalId)
+                                    .foregroundColor(.blue)
+                                    .keyboardType(.numberPad)
+                            }
                         }
                         .autocorrectionDisabled()
                         
@@ -103,7 +114,7 @@ struct ConfigurationView: View {
                         isPresented = false
                     } label: {
                         
-                        Text("Application v0.0.9")
+                        Text("Application v0.1.0")
                         
                         Text("Done")
                     }
@@ -111,6 +122,18 @@ struct ConfigurationView: View {
                 }
             }
         }
+    }
+}
+
+public extension Binding where Value: Equatable {
+    init(_ source: Binding<Value?>, replacingNilWith nilProxy: Value) {
+        self.init(
+            get: { source.wrappedValue ?? nilProxy },
+            set: { newValue in
+                if newValue == nilProxy { source.wrappedValue = nil }
+                else { source.wrappedValue = newValue }
+            }
+        )
     }
 }
 
