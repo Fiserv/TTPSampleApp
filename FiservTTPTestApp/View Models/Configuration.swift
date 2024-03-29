@@ -10,8 +10,8 @@ import FiservTTP
 
 class Configuration: ObservableObject {
     
-    @Published var secretKey: String = "RH2aSkDW8J3OeKtmsTXNnXnGQqVRQ2NnEBv9pts9Gm6"
-    @Published var apiKey: String = "0JvVe4QCtT3srMmflNuUrs1zxZLswmmi"
+    @Published var secretKey: String = "YOUR-SECRET-KEY"
+    @Published var apiKey: String = "YOUR-API-KEY"
     let environment: FiservTTPEnvironment = .Sandbox
     let currencyCode: String = "USD"
     @Published var appleTtpMerchantId: String?
