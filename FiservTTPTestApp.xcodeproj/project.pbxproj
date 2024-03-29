@@ -25,7 +25,6 @@
 		367774A329E83C28006F332C /* ConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationView.swift; sourceTree = "<group>"; };
 		367774A529E84215006F332C /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
 		367B211129C263F000200B96 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		36AD29F52A49ED65003ADD8C /* TTPPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = TTPPackage; path = ../TTPPackage; sourceTree = "<group>"; };
 		36D794B529E85F3900681803 /* TTPView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTPView.swift; sourceTree = "<group>"; };
 		D45C79FC29C0CA0B004E40E6 /* FiservTTPTestApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FiservTTPTestApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D45C79FF29C0CA0B004E40E6 /* FiservTTPTestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiservTTPTestApp.swift; sourceTree = "<group>"; };
@@ -54,7 +53,6 @@
 		D45C79F329C0CA0B004E40E6 = {
 			isa = PBXGroup;
 			children = (
-				36AD29F52A49ED65003ADD8C /* TTPPackage */,
 				365B090729C8EA7E004FC99D /* README.md */,
 				D45C7A0E29C0CAAC004E40E6 /* Entitlements.plist */,
 				D45C79FE29C0CA0B004E40E6 /* FiservTTPTestApp */,
@@ -429,7 +427,7 @@
 			repositoryURL = "https://github.com/Fiserv/TTPPackage";
 			requirement = {
 				kind = upToNextMinorVersion;
-				minimumVersion = 0.0.5;
+				minimumVersion = 0.1.2;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
