@@ -41,7 +41,8 @@ struct ContentView: View {
                     viewModel: FiservTTPViewModel(configuration: configuration),
                     merchantId: configuration.merchantId,
                     merchantName: configuration.merchantName,
-                    appleTtpMerchantId: configuration.appleTtpMerchantId ?? String())
+                    appleTtpMerchantId: configuration.appleTtpMerchantId ?? String(), 
+                    currencyCode: configuration.currencyCode)
         }
     }
 }
