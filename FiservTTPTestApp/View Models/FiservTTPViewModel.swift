@@ -71,6 +71,22 @@ class FiservTTPViewModel: ObservableObject {
         }
     }
     
+    // IS ACCOUNT LINKED
+    @available(iOS 16.4, *)
+    public func isAccountLinked() async throws {
+        do {
+            await MainActor.run { self.isBusy = true }
+            let isLinked = try await self.fiservTTPCardReader.isAccountLinked()
+            await MainActor.run {
+                self.isBusy = false
+                self.accountLinked = isLinked
+            }
+        } catch {
+            await MainActor.run { self.isBusy = false }
+            throw error
+        }
+    }
+    
     // LINK ACCOUNT
     public func linkAccount() async throws {
         do {
@@ -149,21 +165,59 @@ class FiservTTPViewModel: ObservableObject {
         }
     }
     
+    // INQUIRY
+    public func inquiryTransaction(referenceTransactionId: String? = nil,
+                                   referenceOrderId: String? = nil,
+                                   referenceMerchantTransactionId: String? = nil,
+                                   referenceMerchantOrderId: String? = nil) async throws -> [FiservTTPChargeResponse] {
+        
+        do {
+            await MainActor.run { self.isBusy = true }
+
+            let response = try await self.fiservTTPCardReader.inquiryTransaction(referenceTransactionId: referenceTransactionId,
+                                                                                 referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                                                 referenceMerchantOrderId: referenceMerchantOrderId,
+                                                                                 referenceOrderId: referenceOrderId)
+
+            await MainActor.run { self.isBusy = false }
+            return response
+        } catch {
+            await MainActor.run { self.isBusy = false }
+            throw error
+        }
+    }
+    
     // VOID TRANSACTION
     public func voidTransaction(amount: Decimal,
                                 referenceTransactionId: String? = nil,
-                                referenceOrderId: String? = nil,
-                                referenceMerchantTransactionId: String? = nil,
-                                referenceMerchantOrderId: String? = nil) async throws -> FiservTTPChargeResponse {
+                                referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
         
         do {
             await MainActor.run { self.isBusy = true }
 
             let response = try await self.fiservTTPCardReader.voidTransaction(amount: bankersAmount(amount: amount),
-                                                                            referenceTransactionId: referenceTransactionId,
-                                                                            referenceOrderId: referenceOrderId,
-                                                                            referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                                            referenceMerchantOrderId: referenceMerchantOrderId)
+                                                                              referenceTransactionId: referenceTransactionId,
+                                                                              referenceMerchantTransactionId: referenceMerchantTransactionId)
+            await MainActor.run { self.isBusy = false }
+            return response
+        } catch {
+            await MainActor.run { self.isBusy = false }
+            throw error
+        }
+    }
+    
+    // REFUND CARD
+    public func refundCard(amount: Decimal,
+                           referenceTransactionId: String? = nil,
+                           referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
+            
+        do {
+            await MainActor.run { self.isBusy = true }
+             
+            let response = try await self.fiservTTPCardReader.refundCard(amount: bankersAmount(amount: amount),
+                                                                         referenceTransactionId: referenceTransactionId,
+                                                                         referenceMerchantTransactionId: referenceMerchantTransactionId)
+            
             await MainActor.run { self.isBusy = false }
             return response
         } catch {
@@ -175,18 +229,14 @@ class FiservTTPViewModel: ObservableObject {
     // REFUND TRANSACTION
     public func refundTransaction(amount: Decimal,
                                   referenceTransactionId: String? = nil,
-                                  referenceOrderId: String? = nil,
-                                  referenceMerchantTransactionId: String? = nil,
-                                  referenceMerchantOrderId: String? = nil) async throws -> FiservTTPChargeResponse {
+                                  referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
         
         do {
             await MainActor.run { self.isBusy = true }
              
             let response = try await self.fiservTTPCardReader.refundTransaction(amount: bankersAmount(amount: amount),
                                                                                 referenceTransactionId: referenceTransactionId,
-                                                                                referenceOrderId: referenceOrderId,
-                                                                                referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                                                referenceMerchantOrderId: referenceMerchantOrderId)
+                                                                                referenceMerchantTransactionId: referenceMerchantTransactionId)
             
             await MainActor.run { self.isBusy = false }
             return response
