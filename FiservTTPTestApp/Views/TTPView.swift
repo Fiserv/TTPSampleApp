@@ -273,10 +273,10 @@ struct TTPView: View {
                     
                     Section("6. Inquire a TTP Payment") {
                         
-                        TextField("TransactionId", text: $transactionId)
+                        TextField("Ref TransactionId", text: $transactionId)
                             .keyboardType(.default)
                         
-                        TextField("OrderId", text: $orderId)
+                        TextField("Ref OrderId", text: $orderId)
                             .keyboardType(.default)
                         
                         TextField("Your Trans Id", text: $merchantTransactionId)
@@ -312,7 +312,7 @@ struct TTPView: View {
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
                         
-                        TextField("TransactionId", text: $transactionId)
+                        TextField("Ref TransactionId", text: $transactionId)
                             .keyboardType(.default)
                         
                         TextField("Your Trans Id", text: $merchantTransactionId)
@@ -349,7 +349,7 @@ struct TTPView: View {
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
                         
-                        TextField("TransactionId", text: $transactionId)
+                        TextField("Ref TransactionId", text: $transactionId)
                             .keyboardType(.default)
                         
                         TextField("Your Trans Id", text: $merchantTransactionId)
@@ -385,7 +385,7 @@ struct TTPView: View {
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
                         
-                        TextField("TransactionId", text: $transactionId)
+                        TextField("Ref TransactionId", text: $transactionId)
                             .keyboardType(.default)
                         
                         TextField("Your Trans Id", text: $merchantTransactionId)
@@ -398,8 +398,8 @@ struct TTPView: View {
                                 do {
                                     
                                     let response = try await viewModel.refundCard(amount: Decimal(self.amount),
-                                                                    referenceTransactionId: (self.transactionId.isEmpty ? nil : self.transactionId),
-                                                                    referenceMerchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId))
+                                                                                  referenceTransactionId: (self.transactionId.isEmpty ? nil : self.transactionId),
+                                                                                  referenceMerchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId))
                                     
                                     reponseWrapper = FiservTTPResponseWrapper(title: "Refund Card Response", response: response)
                                     
@@ -421,6 +421,12 @@ struct TTPView: View {
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
                         
+                        TextField("Your Trans Id (Optional)", text: $merchantTransactionId)
+                            .keyboardType(.default)
+                        
+                        TextField("Your Order Id (Optional)", text: $merchantOrderId)
+                            .keyboardType(.default)
+                        
                         Button("Refund Card Transaction", action: {
                             
                             Task {
@@ -428,7 +434,9 @@ struct TTPView: View {
                                 do {
                                     
                                     let response = try await viewModel.refundCard(amount: Decimal(self.amount),
-                                                                                  referenceTransactionId: nil)
+                                                                                  merchantOrderId: (self.merchantOrderId.isEmpty ? nil : self.merchantOrderId),
+                                                                                  merchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId), 
+                                                                                  referenceTransactionId: (self.transactionId.isEmpty ? nil : self.transactionId))
                                     
                                     reponseWrapper = FiservTTPResponseWrapper(title: "Refund Card Response", response: response)
                                     
