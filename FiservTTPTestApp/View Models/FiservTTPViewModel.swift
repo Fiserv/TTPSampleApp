@@ -208,6 +208,8 @@ class FiservTTPViewModel: ObservableObject {
     
     // REFUND CARD
     public func refundCard(amount: Decimal,
+                           merchantOrderId: String? = nil,
+                           merchantTransactionId: String? = nil,
                            referenceTransactionId: String? = nil,
                            referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
             
@@ -215,6 +217,8 @@ class FiservTTPViewModel: ObservableObject {
             await MainActor.run { self.isBusy = true }
              
             let response = try await self.fiservTTPCardReader.refundCard(amount: bankersAmount(amount: amount),
+                                                                         merchantOrderId: merchantOrderId,
+                                                                         merchantTransactionId: merchantTransactionId,
                                                                          referenceTransactionId: referenceTransactionId,
                                                                          referenceMerchantTransactionId: referenceMerchantTransactionId)
             
