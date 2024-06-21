@@ -380,7 +380,43 @@ struct TTPView: View {
                         }).buttonStyle(BorderlessButtonStyle())
                     }
                     
-                    Section("8b. Tagged Refund Unmatched [Trans ID + TAP]") {
+                    Section("8b. Debit Refund [Trans ID + TAP, Same Card]") {
+                        
+                        TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
+                            .keyboardType(.decimalPad)
+                        
+                        TextField("Ref TransactionId", text: $transactionId)
+                            .keyboardType(.default)
+                        
+                        TextField("Your Trans Id", text: $merchantTransactionId)
+                            .keyboardType(.default)
+                    
+                        Button("Refund Card Transaction", action: {
+                            
+                            Task {
+                                
+                                do {
+                                    
+                                    let response = try await viewModel.refundCard(amount: Decimal(self.amount),
+                                                                                  referenceTransactionId: (self.transactionId.isEmpty ? nil : self.transactionId),
+                                                                                  referenceMerchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId))
+                                    
+                                    reponseWrapper = FiservTTPResponseWrapper(title: "Refund Card Response", response: response)
+                                    
+                                    self.refundTransactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId ?? ""
+                                    
+                                } catch let error as FiservTTPCardReaderError {
+                                    
+                                    errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you use the correct transactionId?")
+                                }
+                                
+                                self.amount = 0.00
+                            }
+                            
+                        }).buttonStyle(BorderlessButtonStyle())
+                    }
+                    
+                    Section("8c. Tagged Refund Unmatched [Trans ID + TAP, Different Card]") {
                         
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
@@ -416,7 +452,7 @@ struct TTPView: View {
                         }).buttonStyle(BorderlessButtonStyle())
                     }
                     
-                    Section("8c. Open Refund [No Trans ID + TAP, Any Card]") {
+                    Section("8d. Open Refund [No Trans ID + TAP, Any Card]") {
                         
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
