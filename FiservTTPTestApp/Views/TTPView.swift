@@ -155,22 +155,20 @@ struct TTPView: View {
                 
                 Group {
                     
-                    if #available(iOS 16.4, *) {
-                        Section("2a. (Optional) Is Apple Account Linked to MID") {
-                            HStack() {
-                                Image(systemName: "checkmark.circle")
-                                    .foregroundColor(viewModel.accountLinked ? Color.green : Color.gray)
-                                Button("Is Apple Account Linked?", action: {
-                                    
-                                    Task {
-                                        do {
-                                            try await viewModel.isAccountLinked()
-                                        } catch let error as FiservTTPCardReaderError {
-                                            errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you obtain a session token?")
-                                        }
+                    Section("2a. (Optional) Is Apple Account Linked to MID") {
+                        HStack() {
+                            Image(systemName: "checkmark.circle")
+                                .foregroundColor(viewModel.accountLinked ? Color.green : Color.gray)
+                            Button("Is Apple Account Linked?", action: {
+                                
+                                Task {
+                                    do {
+                                        try await viewModel.isAccountLinked()
+                                    } catch let error as FiservTTPCardReaderError {
+                                        errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you obtain a session token?")
                                     }
-                                }).buttonStyle(BorderlessButtonStyle())
-                            }
+                                }
+                            }).buttonStyle(BorderlessButtonStyle())
                         }
                     }
                     
