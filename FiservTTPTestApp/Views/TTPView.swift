@@ -155,22 +155,20 @@ struct TTPView: View {
                 
                 Group {
                     
-                    if #available(iOS 16.4, *) {
-                        Section("2a. (Optional) Is Apple Account Linked to MID") {
-                            HStack() {
-                                Image(systemName: "checkmark.circle")
-                                    .foregroundColor(viewModel.accountLinked ? Color.green : Color.gray)
-                                Button("Is Apple Account Linked?", action: {
-                                    
-                                    Task {
-                                        do {
-                                            try await viewModel.isAccountLinked()
-                                        } catch let error as FiservTTPCardReaderError {
-                                            errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you obtain a session token?")
-                                        }
+                    Section("2a. (Optional) Is Apple Account Linked to MID") {
+                        HStack() {
+                            Image(systemName: "checkmark.circle")
+                                .foregroundColor(viewModel.accountLinked ? Color.green : Color.gray)
+                            Button("Is Apple Account Linked?", action: {
+                                
+                                Task {
+                                    do {
+                                        try await viewModel.isAccountLinked()
+                                    } catch let error as FiservTTPCardReaderError {
+                                        errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you obtain a session token?")
                                     }
-                                }).buttonStyle(BorderlessButtonStyle())
-                            }
+                                }
+                            }).buttonStyle(BorderlessButtonStyle())
                         }
                     }
                     
@@ -504,8 +502,8 @@ struct TTPView: View {
                 }
             }
             // You need to reinitialize the card reader session when returning from the background
-            .onChange(of: scenePhase) { phase in
-                if phase == .active {
+            .onChange(of: scenePhase) {
+                if scenePhase == .active {
                     Task {
                         do {
                             try await viewModel.reinitializeSession()
@@ -516,7 +514,6 @@ struct TTPView: View {
                 }
             }
             .sheet(item: $reponseWrapper) { wrapper in
-                
                 FiservTTPChargeResponseView(responseWrapper: wrapper)
             }
             .sheet(item: $errorWrapper) { wrapper in
