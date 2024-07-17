@@ -72,7 +72,6 @@ class FiservTTPViewModel: ObservableObject {
     }
     
     // IS ACCOUNT LINKED
-    @available(iOS 16.4, *)
     public func isAccountLinked() async throws {
         do {
             await MainActor.run { self.isBusy = true }
