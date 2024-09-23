@@ -77,6 +77,8 @@ struct TTPView: View {
     
     @State private var merchantOrderId = "MOID012345678901"
     
+    @State private var merchantInvoiceNumber = "MINV012345678901"
+    
     @State private var billingAddress = BillingAddress()
     
     // For use in displaying the result of a readCard request
@@ -270,7 +272,8 @@ struct TTPView: View {
                                 do {
                                     
                                     let response = try await viewModel.tokenizeCard(merchantTransactionId: self.merchantTransactionId,
-                                                                                    merchantOrderId: self.merchantOrderId)
+                                                                                    merchantOrderId: self.merchantOrderId,
+                                                                                    merchantInvoiceNumber: self.merchantInvoiceNumber)
                                     
                                     reponseWrapper = FiservTTPResponseWrapper(title: "Tokenize Card",
                                                                               responseString: response.prettyJSON)
@@ -294,13 +297,15 @@ struct TTPView: View {
                     Section("X. Inquire") {
                         Text("Read Card: false")
                         Text("Expects a previous Ref Trans Id \nSessionless")
+                        TextField("ReferenceTransactionId", text: $viewModel.referenceTransactionId)
+                            .keyboardType(.default)
                         Button ("[Inquire]", action: {
                             
                             Task {
                                 
                                 do {
                                     
-                                    let response = try await viewModel.inquire(referenceTransactionId: viewModel.referenceTransactionId)
+                                    let response = try await viewModel.transactionInquiry(referenceTransactionId: viewModel.referenceTransactionId.isEmpty ? nil : viewModel.referenceTransactionId)
                                     
                                     reponseWrapper = FiservTTPResponseWrapper(title: "Inquire",
                                                                               responseString: response.prettyJSON)
@@ -325,6 +330,8 @@ struct TTPView: View {
                     Section("X. Cancels") {
                         Text("Read Card: false")
                         Text("Expects a previous Ref Trans Id \nSessionless")
+                        TextField("ReferenceTransactionId", text: $viewModel.referenceTransactionId)
+                            .keyboardType(.default)
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
                         Button ("Cancels", action: {
@@ -334,7 +341,7 @@ struct TTPView: View {
                                 do {
                                     
                                     let response = try await viewModel.cancels(amount: Decimal(self.amount),
-                                                                               referenceTransactionId: viewModel.referenceTransactionId)
+                                                                               referenceTransactionId: viewModel.referenceTransactionId.isEmpty ? nil : viewModel.referenceTransactionId)
                                     
                                     reponseWrapper = FiservTTPResponseWrapper(title: "Cancels",
                                                                               responseString: response.prettyJSON)

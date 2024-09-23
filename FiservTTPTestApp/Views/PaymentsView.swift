@@ -22,6 +22,10 @@ struct PaymentsView: View {
     // Error handling and displaying
     @State private var errorWrapper: FiservTTPErrorWrapper?
     
+    @State private var merchantOrderId: String = ""
+    @State private var merchantTransactionId: String = ""
+    @State private var merchantInvoiceNumber: String = ""
+    
     var body: some View {
         Form {
             Section {
@@ -29,20 +33,36 @@ struct PaymentsView: View {
             }
             
             Section {
-                Text("Read Card: true, captureFlage: true")
-                TextField("Amount", value: $amount, format: .currency(code: "USD"))
-                    .keyboardType(.decimalPad)
-                Button("Sale", action: {
-                    sale()
+                Button("Clear paymentToken", action: {
+                    clearPaymentToken()
                 }).buttonStyle(BorderlessButtonStyle())
+            }
+            
+            Section {
+                TextField("MerchantOrderId", text: $merchantOrderId)
+                TextField("MerchantTransactionId", text: $merchantTransactionId)
+                TextField("MerchantInvoiceNumber", text: $merchantInvoiceNumber)
             }
             
             Section {
                 Text("Read Card: true, captureFlag: false")
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
-                Button("Auth", action: {
-                    auth()
+                Toggle(isOn: $viewModel.createToken) {
+                    Text("Create Payment Token")
+                }
+                Button("Auth using Card", action: {
+                    auth(fromToken: false)
+                }).buttonStyle(BorderlessButtonStyle())
+            }
+            
+            Section {
+                Text("Read Card: false, captureFlag: false \nExpects previous payment token")
+                TextField("Amount", value: $amount, format: .currency(code: "USD"))
+                    .keyboardType(.decimalPad)
+                
+                Button("Auth using Payment Token", action: {
+                    auth(fromToken: true)
                 }).buttonStyle(BorderlessButtonStyle())
             }
             
@@ -50,7 +70,7 @@ struct PaymentsView: View {
                 Text("Read Card: false, captureFlage: true \nExpects previous authorization\nSessionless")
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
-                Button("Capture", action: {
+                Button("Sale (Capture from Auth)", action: {
                     capture()
                 }).buttonStyle(BorderlessButtonStyle())
             }
@@ -59,8 +79,20 @@ struct PaymentsView: View {
                 Text("Read Card: false, captureFlage: true \nExpects previous payment token\nSessionless")
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
-                Button("Payment Token", action: {
+                Button("Sale (Payment Token)", action: {
                     paymentToken()
+                }).buttonStyle(BorderlessButtonStyle())
+            }
+            
+            Section {
+                Text("Read Card: true, captureFlage: true")
+                TextField("Amount", value: $amount, format: .currency(code: "USD"))
+                    .keyboardType(.decimalPad)
+                Toggle(isOn: $viewModel.createToken) {
+                    Text("Create Payment Token")
+                }
+                Button("Sale (Read Card)", action: {
+                    sale()
                 }).buttonStyle(BorderlessButtonStyle())
             }
             
@@ -81,14 +113,32 @@ struct PaymentsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
     
+    func clearPaymentToken() {
+        
+        viewModel.paymentTokenSourceRequest = nil
+        
+        if viewModel.paymentTokenSourceRequest == nil {
+            
+            print("Payment Token cleared")
+            
+        } else {
+            
+            print("Clear Payment Token Failed")
+        }
+    }
+    
     func sale() {
-
+    
         Task {
             do {
                 let response =  try await viewModel.charges(amount: Decimal(self.amount),
+                                                            createPaymentToken: viewModel.createToken,
                                                             transactionType: PaymentTransactionType.sale,
-                                                            merchantOrderId: "MOID_0000001_SALE",
-                                                            merchantTransactionId: "MTID_0000001_SALE")
+                                                            merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
+                                                            merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
+                                                            merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber)
+                
+                viewModel.createToken = false
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Sale",
                                                           responseString: response.prettyJSON)
@@ -99,14 +149,32 @@ struct PaymentsView: View {
         }
     }
     
-    func auth() {
+    func auth(fromToken: Bool) {
+        
+        if fromToken == false && viewModel.paymentTokenSourceRequest != nil {
+            
+            print("EXPECTED PAYMENT TOKEN TO BE NIL")
+        }
+        
+        if fromToken == true && viewModel.paymentTokenSourceRequest == nil {
+            
+            print("EXPECTED PAYMENT TOKEN")
+            
+            let error = FiservTTPCardReaderError(title: "Authorization", localizedDescription: String(localized: "Expected a pre-existing payment token."))
+            errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "")
+            return
+        }
         
         Task {
             do {
                 let response =  try await viewModel.charges(amount: Decimal(self.amount),
+                                                            createPaymentToken: fromToken ? false : viewModel.createToken,
                                                             transactionType: PaymentTransactionType.auth,
-                                                            merchantOrderId: "MOID000000_AUTH",
-                                                            merchantTransactionId: "MTID000000_AUTH")
+                                                            paymentTokenSource: viewModel.paymentTokenSourceRequest,
+                                                            merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
+                                                            merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
+                                                            merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber)
+                viewModel.createToken = false
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Auth",
                                                           responseString: response.prettyJSON)
@@ -123,8 +191,9 @@ struct PaymentsView: View {
             do {
                 let response = try await viewModel.charges(amount: Decimal(self.amount),
                                                            transactionType: PaymentTransactionType.capture,
-                                                           merchantOrderId: "MOID_0000001_CAP",
-                                                           merchantTransactionId: "MTID_0000001_CAP",
+                                                           merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
+                                                           merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
+                                                           merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber,
                                                            referenceTransactionId: viewModel.authTransactionId)
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Capture",
@@ -143,8 +212,9 @@ struct PaymentsView: View {
                 let response = try await viewModel.charges(amount: Decimal(self.amount),
                                                            transactionType: PaymentTransactionType.paymentToken,
                                                            paymentTokenSource: viewModel.paymentTokenSourceRequest,
-                                                           merchantOrderId: "MOID000000_TOKEN",
-                                                           merchantTransactionId: "MTID000000_TOKEN")
+                                                           merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
+                                                           merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
+                                                           merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber)
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Payment Token",
                                                           responseString: response.prettyJSON)

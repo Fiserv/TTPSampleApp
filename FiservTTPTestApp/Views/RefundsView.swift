@@ -90,7 +90,7 @@ struct RefundsView: View {
         Task {
             do {
                 let response = try await viewModel.refunds(amount: Decimal(self.amount),
-                                                           refundTransactionType: .tagged,
+                                                           refundTransactionType: .matched,
                                                            referenceTransactionId: self.viewModel.referenceTransactionId)
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Refunds [Tagged Matched]",

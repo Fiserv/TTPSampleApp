@@ -33,6 +33,7 @@ class FiservTTPViewModel: ObservableObject {
     @Published var cardReaderActive: Bool = false
     
     @Published var useAddress: Bool = false
+    @Published var createToken: Bool = false
     
     // USED FOR PAYMENT TYPE CAPTURE
     @Published var authTransactionId: String?
@@ -156,13 +157,13 @@ class FiservTTPViewModel: ObservableObject {
     }
     
     public func accountVerification(billingAddress: BillingAddress,
-                                    merchantTransactionId: String?,
-                                    merchantOrderId: String?,
-                                    createToken: Bool) async throws -> Models.AccountVerificationResponse {
+                                    merchantTransactionId: String? = nil,
+                                    merchantOrderId: String? = nil,
+                                    merchantInvoiceNumber: String? = nil) async throws -> Models.AccountVerificationResponse {
         
         let transactionDetailsRequest = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
                                                                          merchantOrderId: merchantOrderId,
-                                                                         captureFlag: false)
+                                                                         merchantInvoiceNumber: merchantInvoiceNumber)
         var addressRequest: Models.AddressRequest?
         var billingAddressRequest: Models.BillingAddressRequest?
         
@@ -195,12 +196,14 @@ class FiservTTPViewModel: ObservableObject {
         }
     }
     
-    public func tokenizeCard(merchantTransactionId: String,
-                             merchantOrderId: String) async throws -> Models.TokenizeCardResponse {
+    public func tokenizeCard(merchantTransactionId: String? = nil,
+                             merchantOrderId: String? = nil,
+                             merchantInvoiceNumber: String? = nil) async throws -> Models.TokenizeCardResponse {
         
         let transactionDetailsRequest = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
                                                                          merchantOrderId: merchantOrderId,
-                                                                         captureFlag: false)
+                                                                         merchantInvoiceNumber: merchantInvoiceNumber)
+        
         do {
             
             let response = try await self.fiservTTPCardReader.tokenizeCard(transactionDetailsRequest: transactionDetailsRequest)
@@ -228,10 +231,10 @@ class FiservTTPViewModel: ObservableObject {
         }
     }
     
-    public func inquire(referenceTransactionId: String? = nil,
-                        referenceMerchantTransactionId: String? = nil,
-                        referenceOrderId: String? = nil,
-                        referenceMerchantOrderId: String? = nil) async throws -> [Models.InquireResponse] {
+    public func transactionInquiry(referenceTransactionId: String? = nil,
+                                   referenceMerchantTransactionId: String? = nil,
+                                   referenceOrderId: String? = nil,
+                                   referenceMerchantOrderId: String? = nil) async throws -> [Models.InquireResponse] {
         
         let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: referenceTransactionId,
                                                                                     referenceMerchantTransactionId: referenceMerchantTransactionId,
@@ -240,7 +243,7 @@ class FiservTTPViewModel: ObservableObject {
                                                                                     referenceClientRequestId: nil)
         do {
             
-            let response = try await self.fiservTTPCardReader.inquire(referenceTransactionDetailsRequest: referenceTransactionDetails)
+            let response = try await self.fiservTTPCardReader.transactionInquiry(referenceTransactionDetailsRequest: referenceTransactionDetails)
             
             await MainActor.run { self.isBusy = false }
             return response
@@ -274,10 +277,12 @@ class FiservTTPViewModel: ObservableObject {
     // REFERENCE TRANSACTION DETAILS    N        N         B        N
     
     public func charges(amount: Decimal,
+                        createPaymentToken: Bool = false,
                         transactionType: PaymentTransactionType,
                         paymentTokenSource: Models.PaymentTokenSourceRequest? = nil,
                         merchantOrderId: String? = nil,
                         merchantTransactionId: String? = nil,
+                        merchantInvoiceNumber: String? = nil,
                         referenceTransactionId: String? = nil,
                         referenceMerchantTransactionId: String? = nil,
                         referenceOrderId: String? = nil,
@@ -302,7 +307,9 @@ class FiservTTPViewModel: ObservableObject {
             
             let transactionDetails = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
                                                                       merchantOrderId: merchantOrderId,
-                                                                      captureFlag: captureFlag)
+                                                                      merchantInvoiceNumber: merchantInvoiceNumber,
+                                                                      captureFlag: captureFlag,
+                                                                      createToken: createPaymentToken)
             
             var referenceTransactionDetails: Models.ReferenceTransactionDetailsRequest?
             // EXPECTS PREVIOUS AUTH
@@ -361,7 +368,9 @@ class FiservTTPViewModel: ObservableObject {
                     // This will enable the .capture paymentType
                     if let transactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId {
                         await MainActor.run {
+                            // Auth can be cancelled
                             // Grab the transactionId (and use it as an authorization)
+                            self.referenceTransactionId = transactionId
                             self.authTransactionId = transactionId
                         }
                     }
@@ -499,6 +508,7 @@ class FiservTTPViewModel: ObservableObject {
                         refundTransactionType: RefundTransactionType,
                         merchantOrderId: String? = nil,
                         merchantTransactionId: String? = nil,
+                        merchantInvoiceNumber: String? = nil,
                         referenceTransactionId: String? = nil,
                         referenceMerchantTransactionId: String? = nil,
                         referenceOrderId: String? = nil,
@@ -518,22 +528,16 @@ class FiservTTPViewModel: ObservableObject {
             
             await MainActor.run { self.isBusy = true }
             
-            let captureFlag = refundTransactionType != .tagged
+            let captureFlag = refundTransactionType != .matched
             
-            // var captureFlag = true
-            
-            // if (refundTransactionType == .tagged) {
-            //     captureFlag = false
-            // }
-            
+            // OPTIONAL WHEN refundTransactionType == .matched
             let transactionDetailsRequest = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
                                                                              merchantOrderId: merchantOrderId,
+                                                                             merchantInvoiceNumber: merchantInvoiceNumber,
                                                                              captureFlag: captureFlag)
             
             let response = try await self.fiservTTPCardReader.refunds(amount: bankersAmount(amount: amount),
                                                                       refundTransactionType: refundTransactionType,
-                                                                      // merchantOrderId: merchantOrderId,
-                                                                      // merchantTransactionId: merchantTransactionId,
                                                                       transactionDetails: transactionDetailsRequest,
                                                                       referenceTransactionDetails: referenceTransactionDetails)
             
@@ -605,6 +609,7 @@ class FiservTTPViewModel: ObservableObject {
         }
     }
     
+    // NEW
     public func cancels(amount: Decimal,
                         referenceTransactionId: String? = nil,
                         referenceOrderId: String? = nil,

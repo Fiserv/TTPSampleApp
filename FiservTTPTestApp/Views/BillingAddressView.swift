@@ -22,6 +22,10 @@ struct BillingAddressView: View {
     // Error handling and displaying
     @State private var errorWrapper: FiservTTPErrorWrapper?
     
+    @State private var merchantOrderId: String = ""
+    @State private var merchantTransactionId: String = ""
+    @State private var merchantInvoiceNumber: String = ""
+    
     var body: some View {
         
         Form {
@@ -35,6 +39,9 @@ struct BillingAddressView: View {
                 TextField("State", text: $billingAddress.state)
                 TextField("Postal Code", text: $billingAddress.postalCode)
                 TextField("Country", text: $billingAddress.country)
+                TextField("MerchantOrderId", text: $merchantOrderId)
+                TextField("MerchantTransactionId", text: $merchantTransactionId)
+                TextField("MerchantInvoiceNumber", text: $merchantInvoiceNumber)
                 Toggle(isOn: $viewModel.useAddress) {
                     Text("Use Address Info")
                 }
@@ -64,9 +71,9 @@ struct BillingAddressView: View {
         Task {
             do {
                 let response = try await viewModel.accountVerification(billingAddress: self.billingAddress,
-                                                                       merchantTransactionId: "MTID000000_ACT",
-                                                                       merchantOrderId: "MTOD000000_ACT",
-                                                                       createToken: false)
+                                                                       merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
+                                                                       merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
+                                                                       merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber)
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Account Verification",
                                                           responseString: response.prettyJSON)
