@@ -360,10 +360,13 @@ struct TTPView: View {
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
                         
+                        TextField("Your Order Id (Optional)", text: $merchantOrderId)
+                            .keyboardType(.default)
+                        
                         TextField("Your Trans Id (Optional)", text: $merchantTransactionId)
                             .keyboardType(.default)
                         
-                        TextField("Your Order Id (Optional)", text: $merchantOrderId)
+                        TextField("Your Invoice Number (Optional)", text: $merchantInvoiceNumber)
                             .keyboardType(.default)
                         
                         Button("Accept Payment",action: {
@@ -373,8 +376,9 @@ struct TTPView: View {
                                 do {
                                     
                                     let chargeResponse = try await viewModel.readCard(amount: Decimal(self.amount),
-                                                                                      merchantOrderId: self.merchantOrderId,
-                                                                                      merchantTransactionId: self.merchantTransactionId)
+                                                                                      merchantOrderId: (self.merchantOrderId.isEmpty ? nil : self.merchantOrderId),
+                                                                                      merchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId),
+                                                                                      merchantInvoiceNumber: (self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber))
                                     
                                     reponseWrapper = FiservTTPResponseWrapper(title: "Charge Response", 
                                                                               responseString: chargeResponse.prettyJSON)
@@ -482,6 +486,7 @@ struct TTPView: View {
                         TextField("Ref TransactionId", text: $transactionId)
                             .keyboardType(.default)
                         
+                        // ONLY USED FOR REFERENCE
                         TextField("Your Trans Id", text: $merchantTransactionId)
                             .keyboardType(.default)
                         
@@ -519,7 +524,13 @@ struct TTPView: View {
                         TextField("Ref TransactionId", text: $transactionId)
                             .keyboardType(.default)
                         
-                        TextField("Your Trans Id", text: $merchantTransactionId)
+                        TextField("Your Trans Id (Optional)", text: $merchantTransactionId)
+                            .keyboardType(.default)
+                        
+                        TextField("Your Order Id (Optional)", text: $merchantOrderId)
+                            .keyboardType(.default)
+                        
+                        TextField("Your Order Id (Optional)", text: $merchantInvoiceNumber)
                             .keyboardType(.default)
                     
                         Button("Refund Card Transaction", action: {
@@ -529,8 +540,10 @@ struct TTPView: View {
                                 do {
                                     
                                     let response = try await viewModel.refundCard(amount: Decimal(self.amount),
-                                                                                  referenceTransactionId: (self.transactionId.isEmpty ? nil : self.transactionId),
-                                                                                  referenceMerchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId))
+                                                                                  merchantOrderId: (self.merchantOrderId.isEmpty ? nil : self.merchantOrderId),
+                                                                                  merchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId),
+                                                                                  merchantInvoiceNumber: (self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber),
+                                                                                  referenceTransactionId: (self.transactionId.isEmpty ? nil : self.transactionId))
                                     
                                     reponseWrapper = FiservTTPResponseWrapper(title: "Refund Card Response",
                                                                               responseString: response.prettyJSON)
@@ -555,9 +568,15 @@ struct TTPView: View {
                         
                         TextField("Ref TransactionId", text: $transactionId)
                             .keyboardType(.default)
-                        
-                        TextField("Your Trans Id", text: $merchantTransactionId)
+                        // CAN BE OTHER THAN ORIGINAL VALUE
+                        TextField("Your Trans Id (Optional)", text: $merchantTransactionId)
                             .keyboardType(.default)
+// NA
+//                        TextField("Your Order Id (Optional)", text: $merchantOrderId)
+//                            .keyboardType(.default)
+// NA
+//                        TextField("Your Order Id (Optional)", text: $merchantInvoiceNumber)
+//                            .keyboardType(.default)
                         
                         Button("Refund Card Transaction", action: {
                             
@@ -566,8 +585,10 @@ struct TTPView: View {
                                 do {
                                     
                                     let response = try await viewModel.refundCard(amount: Decimal(self.amount),
-                                                                                  referenceTransactionId: (self.transactionId.isEmpty ? nil : self.transactionId),
-                                                                                  referenceMerchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId))
+                                                                                  merchantOrderId: (self.merchantOrderId.isEmpty ? nil : self.merchantOrderId),
+                                                                                  merchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId),
+                                                                                  merchantInvoiceNumber: (self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber),
+                                                                                  referenceTransactionId: (self.transactionId.isEmpty ? nil : self.transactionId))
                                     
                                     reponseWrapper = FiservTTPResponseWrapper(title: "Refund Card Response",
                                                                               responseString: response.prettyJSON)
@@ -589,11 +610,14 @@ struct TTPView: View {
                         
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
-                        
+                        // FOR REFERENCE
                         TextField("Your Trans Id (Optional)", text: $merchantTransactionId)
                             .keyboardType(.default)
-                        
+                        // FOR REFERENCE
                         TextField("Your Order Id (Optional)", text: $merchantOrderId)
+                            .keyboardType(.default)
+                        // FOR REFERENCE
+                        TextField("Your Invoice Number (Optional)", text: $merchantInvoiceNumber)
                             .keyboardType(.default)
                         
                         Button("Refund Card Transaction", action: {
@@ -604,7 +628,8 @@ struct TTPView: View {
                                     
                                     let response = try await viewModel.refundCard(amount: Decimal(self.amount),
                                                                                   merchantOrderId: (self.merchantOrderId.isEmpty ? nil : self.merchantOrderId),
-                                                                                  merchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId), 
+                                                                                  merchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId),
+                                                                                  merchantInvoiceNumber: (self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber),
                                                                                   referenceTransactionId: (self.transactionId.isEmpty ? nil : self.transactionId))
                                     
                                     reponseWrapper = FiservTTPResponseWrapper(title: "Refund Card Response",
@@ -725,92 +750,6 @@ struct FiservResponseWrapperView: View {
         }
     }
 }
-
-// CHARGE RESPONSE VIEW
-//struct FiservTTPChargeResponseView: View {
-//
-//    let responseWrapper: FiservTTPResponseWrapper?
-//
-//    @Environment(\.dismiss) private var dismiss
-//
-//    var body: some View {
-//
-//        NavigationView {
-//
-//            VStack {
-//                            
-//                Text(responseWrapper?.title ?? "Server Response")
-//                    .font(.title)
-//                    .padding(.bottom)
-//                
-//                if let response = responseWrapper?.responseString {
-//
-//                    ScrollView {
-//
-//                        VStack {
-//
-//                            Text(response)
-//
-//                        }.frame(maxWidth: .infinity)
-//                    }
-//
-//                } else {
-//
-//                    VStack {
-//
-//                        Text("None")
-//
-//                    }.frame(maxWidth: .infinity)
-//                }
-//                
-////                if let responses = responseWrapper?.responses {
-////                
-////                    ScrollView {
-////                        
-////                        ForEach(Array(responses.enumerated()), id: \.offset) { index, element in
-////                        
-////                            VStack {
-////                                
-////                                Text(element.prettyJSON)
-////
-////                            }.frame(maxWidth: .infinity)
-////                        }
-////                    }
-////                    
-////                } else if let response = responseWrapper?.response {
-////                    
-////                    ScrollView {
-////                        
-////                        VStack {
-////                            
-////                            Text(response.prettyJSON)
-////
-////                        }.frame(maxWidth: .infinity)
-////                    }
-////                    
-////                } else {
-////                    
-////                    VStack {
-////                        
-////                        Text("None")
-////
-////                    }.frame(maxWidth: .infinity)
-////                }
-//            }
-//            .padding()
-//            .background(.ultraThinMaterial)
-//            .cornerRadius(16)
-//            .navigationBarTitleDisplayMode(.inline)
-//            .toolbar {
-//                ToolbarItem(placement: .navigationBarTrailing) {
-//                    Button("Dismiss") {
-//                        dismiss()
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
 
 // ERROR VIEW
 struct FiservTTPErrorView: View {

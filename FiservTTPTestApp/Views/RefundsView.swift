@@ -20,6 +20,8 @@ struct RefundsView: View {
     
     @State private var merchantTransactionId = "MTID_0000001_"
     
+    @State private var merchantInvoiceNumber = ""
+    
     // For use in displaying the result of a readCard request
     @State private var reponseWrapper: FiservTTPResponseWrapper?
     
@@ -36,6 +38,11 @@ struct RefundsView: View {
             
             Section {
                 Text("Read Card: false, Ref required")
+                
+                // ONLY USED FOR REFERENCE
+                TextField("Your Trans Id", text: $merchantTransactionId)
+                    .keyboardType(.default)
+                
                 TextField("ReferenceTransactionId", text: $viewModel.referenceTransactionId)
                     .keyboardType(.default)
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
@@ -49,6 +56,13 @@ struct RefundsView: View {
                 Text("Read Card: true, Ref required")
                 TextField("ReferenceTransactionId", text: $viewModel.referenceTransactionId)
                     .keyboardType(.default)
+//                NA
+//                TextField("MerchantOrderId", text: $merchantOrderId)
+//                    .keyboardType(.default)
+                TextField("MerchantTransactionId", text: $merchantTransactionId)
+                    .keyboardType(.default)
+//                TextField("MerchantTransactionId", text: $merchantInvoiceNumber)
+//                    .keyboardType(.default)
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
                 Button("Tagged UnMatched", action: {
@@ -61,6 +75,8 @@ struct RefundsView: View {
                 TextField("MerchantOrderId", text: $merchantOrderId)
                     .keyboardType(.default)
                 TextField("MerchantTransactionId", text: $merchantTransactionId)
+                    .keyboardType(.default)
+                TextField("MerchantInvoiceNumber", text: $merchantInvoiceNumber)
                     .keyboardType(.default)
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
@@ -101,33 +117,24 @@ struct RefundsView: View {
         }
     }
     
-    func debitRefund() {
-        func taggedRefundUnMatched() {
-            Task {
-                do {
-                    let response = try await viewModel.refunds(amount: Decimal(self.amount),
-                                                               refundTransactionType: .unmatched,
-                                                               merchantTransactionId: self.merchantTransactionId,
-                                                               referenceTransactionId: self.viewModel.referenceTransactionId)
-                    
-                    reponseWrapper = FiservTTPResponseWrapper(title: "Refunds [Debit])",
-                                                              responseString: response.prettyJSON)
-                } catch let error as FiservTTPCardReaderError {
-                    errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you use the correct transactionId?")
-                }
-            }
-        }
-    }
+//    func debitRefund() {
+//        func taggedRefundUnMatched() {
+//            Task {
+//                do {
+//                    let response = try await viewModel.refunds(amount: Decimal(self.amount),
+//                                                               refundTransactionType: .unmatched,
+//                                                               merchantTransactionId: self.merchantTransactionId,
+//                                                               referenceTransactionId: self.viewModel.referenceTransactionId)
+//                    
+//                    reponseWrapper = FiservTTPResponseWrapper(title: "Refunds [Debit])",
+//                                                              responseString: response.prettyJSON)
+//                } catch let error as FiservTTPCardReaderError {
+//                    errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you use the correct transactionId?")
+//                }
+//            }
+//        }
+//    }
 
-    //    public func refunds(amount: Decimal,
-    //                        refundTransactionType: RefundTransactionType,
-    //                        merchantOrderId: String? = nil,
-    //                        merchantTransactionId: String? = nil,
-    //                        referenceTransactionId: String? = nil,
-    //                        referenceMerchantTransactionId: String? = nil,
-    //                        referenceOrderId: String? = nil,
-    //                        referenceMerchantOrderId: String? = nil)
-    //
     // ARGS                            MATCHED    UNMATCHED    OPEN
     //
     // READ CARD                        N           Y           Y
@@ -142,7 +149,10 @@ struct RefundsView: View {
             do {
                 let response = try await viewModel.refunds(amount: Decimal(self.amount),
                                                            refundTransactionType: .unmatched,
-                                                           merchantTransactionId: self.merchantTransactionId,
+                                                           // NA
+                                                           // merchantOrderId: (self.merchantOrderId.isEmpty ? nil : self.merchantOrderId),
+                                                           merchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId),
+                                                           merchantInvoiceNumber: (self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber),
                                                            referenceTransactionId: self.viewModel.referenceTransactionId)
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Refunds [Tagged UnMatched]",
@@ -158,7 +168,9 @@ struct RefundsView: View {
             do {
                 let response = try await viewModel.refunds(amount: Decimal(self.amount),
                                                            refundTransactionType: .open,
-                                                           merchantTransactionId: self.merchantTransactionId)
+                                                           merchantOrderId: (self.merchantOrderId.isEmpty ? nil : self.merchantOrderId),
+                                                           merchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId),
+                                                           merchantInvoiceNumber: (self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber))
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Refunds [Open])",
                                                           responseString: response.prettyJSON)

@@ -296,13 +296,6 @@ class FiservTTPViewModel: ObservableObject {
         do {
             // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             
-//            var captureFlag = true
-//            
-//            // CAPTURE FLAG
-//            if transactionType == .auth {
-//                captureFlag = false
-//            }
-            
             let captureFlag = transactionType != .auth
             
             let transactionDetails = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
@@ -323,176 +316,35 @@ class FiservTTPViewModel: ObservableObject {
                                                                       transactionDetailsRequest: transactionDetails,
                                                                       referenceTransactionDetailsRequest: referenceTransactionDetails,
                                                                       paymentTokenSourceRequest: paymentTokenSource)
-            // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            
-//            switch transactionType {
-//            case .capture:
-//                let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: referenceTransactionId)
-//                
-//                chargesResponse = try await self.fiservTTPCardReader.charges(amount: bankersAmount(amount: amount),
-//                                                                             transactionType: transactionType,
-//                                                                             merchantOrderId: merchantOrderId,
-//                                                                             merchantTransactionId: merchantTransactionId,
-//                                                                             referenceTransactionDetailsRequest: referenceTransactionDetails)
-//            case .paymentToken:
-//                chargesResponse = try await self.fiservTTPCardReader.charges(amount: bankersAmount(amount: amount),
-//                                                                             transactionType: transactionType,
-//                                                                             merchantOrderId: merchantOrderId,
-//                                                                             merchantTransactionId: merchantTransactionId,
-//                                                                             paymentTokenSourceRequest: paymentTokenSource)
-//            case .auth:
-//                chargesResponse = try await self.fiservTTPCardReader.charges(amount: bankersAmount(amount: amount),
-//                                                                             transactionType: transactionType,
-//                                                                             merchantOrderId: merchantOrderId,
-//                                                                             merchantTransactionId: merchantTransactionId)
-//            case .sale:
-//                chargesResponse = try await self.fiservTTPCardReader.charges(amount: bankersAmount(amount: amount),
-//                                                                             transactionType: transactionType,
-//                                                                             merchantOrderId: merchantOrderId,
-//                                                                             merchantTransactionId: merchantTransactionId)
-//            }
-            
-//            if let response = chargesResponse {
                 
-                // PAYMENT TYPE CAPTURE, SALE, PAYMENT TOKEN
-                if response.gatewayResponse?.transactionState == "CAPTURED" {
-                    await MainActor.run {
-                        // Grab the transactionId
-                        self.referenceTransactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId ?? ""
-                    }
+            // PAYMENT TYPE CAPTURE, SALE, PAYMENT TOKEN
+            if response.gatewayResponse?.transactionState == "CAPTURED" {
+                await MainActor.run {
+                    // Grab the transactionId
+                    self.referenceTransactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId ?? ""
                 }
-                
-                // PAYMENT TYPE AUTH
-                if response.gatewayResponse?.transactionState == "AUTHORIZED" {
+            }
+            
+            // PAYMENT TYPE AUTH
+            if response.gatewayResponse?.transactionState == "AUTHORIZED" {
 
-                    // This will enable the .capture paymentType
-                    if let transactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId {
-                        await MainActor.run {
-                            // Auth can be cancelled
-                            // Grab the transactionId (and use it as an authorization)
-                            self.referenceTransactionId = transactionId
-                            self.authTransactionId = transactionId
-                        }
+                // This will enable the .capture paymentType
+                if let transactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId {
+                    await MainActor.run {
+                        // Auth can be cancelled
+                        // Grab the transactionId (and use it as an authorization)
+                        self.referenceTransactionId = transactionId
+                        self.authTransactionId = transactionId
                     }
                 }
-                await MainActor.run { self.isBusy = false }
-                return response
-//            } else {
-//                throw FiservTTPCardReaderError(title: "Charges",
-//                                               localizedDescription: String(localized: "Charges response invalid or missing."))
-//            }
+            }
+            await MainActor.run { self.isBusy = false }
+            return response
             
         }  catch {
             await MainActor.run { self.isBusy = false }
             throw error
         }
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        
-//        if transactionType == .capture {
-//            // TODO: Requires a Previous Authorization Request
-//            do {
-//                
-//                let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: referenceTransactionId)
-//                
-//                let response = try await self.fiservTTPCardReader.charges(amount: bankersAmount(amount: amount),
-//                                                                          transactionType: transactionType,
-//                                                                          merchantOrderId: merchantOrderId,
-//                                                                          merchantTransactionId: merchantTransactionId,
-//                                                                          referenceTransactionDetailsRequest: referenceTransactionDetails)
-//                // Grab the transactionId
-//                if response.gatewayResponse?.transactionState == "CAPTURED" {
-//                    
-//                    if let referenceTransactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId {
-//                        await MainActor.run {
-//                            self.referenceTransactionId = referenceTransactionId
-//                        }
-//                    }
-//                }
-//                await MainActor.run { self.isBusy = false }
-//                return response
-//            } catch {
-//                await MainActor.run { self.isBusy = false }
-//                throw error
-//            }
-//        }
-//        
-//        if transactionType == .paymentToken {
-//            
-//            // TODO: Requires a Previous Payment Token Request
-//            
-//            do {
-//                let response = try await self.fiservTTPCardReader.charges(amount: bankersAmount(amount: amount),
-//                                                                          transactionType: transactionType,
-//                                                                          merchantOrderId: merchantOrderId,
-//                                                                          merchantTransactionId: merchantTransactionId,
-//                                                                          paymentTokenSourceRequest: paymentTokenSource)
-//                // Grab the transactionId
-//                if response.gatewayResponse?.transactionState == "CAPTURED" {
-//                    
-//                    if let referenceTransactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId {
-//                        await MainActor.run {
-//                            self.referenceTransactionId = referenceTransactionId
-//                        }
-//                    }
-//                }
-//                await MainActor.run { self.isBusy = false }
-//                return response
-//            } catch {
-//                await MainActor.run { self.isBusy = false }
-//                throw error
-//            }
-//        }
-//        
-//        if transactionType == .auth {
-//            
-//            do {
-//                let response = try await self.fiservTTPCardReader.charges(amount: bankersAmount(amount: amount),
-//                                                                          transactionType: transactionType,
-//                                                                          merchantOrderId: merchantOrderId,
-//                                                                          merchantTransactionId: merchantTransactionId)
-//                // Grab the transactionId
-//                if response.gatewayResponse?.transactionState == "AUTHORIZED" {
-//
-//                    // This will enable the .capture paymentType
-//                    if let transactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId {
-//                        await MainActor.run {
-//                            self.authTransactionId = transactionId
-//                        }
-//                    }
-//                }
-//                await MainActor.run { self.isBusy = false }
-//                return response
-//            } catch {
-//                await MainActor.run { self.isBusy = false }
-//                throw error
-//            }
-//        }
-//        
-//        if transactionType == .sale {
-//            
-//            do {
-//                let response = try await self.fiservTTPCardReader.charges(amount: bankersAmount(amount: amount),
-//                                                                          transactionType: transactionType,
-//                                                                          merchantOrderId: merchantOrderId,
-//                                                                          merchantTransactionId: merchantTransactionId)
-//                // Grab the transactionId
-//                if response.gatewayResponse?.transactionState == "CAPTURED" {
-//                    
-//                    if let referenceTransactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId {
-//                        await MainActor.run {
-//                            self.referenceTransactionId = referenceTransactionId
-//                        }
-//                    }
-//                }
-//                await MainActor.run { self.isBusy = false }
-//                return response
-//            } catch {
-//                await MainActor.run { self.isBusy = false }
-//                throw error
-//            }
-//        }
-//        
-//        throw FiservTTPCardReaderError(title: "", localizedDescription: "", failureReason: "")
     }
     
     // ARGS                            MATCHED    UNMATCHED    OPEN
@@ -551,15 +403,17 @@ class FiservTTPViewModel: ObservableObject {
     
     // READ CARD
     public func readCard(amount: Decimal,
-                         merchantOrderId: String,
-                         merchantTransactionId: String) async throws -> FiservTTPChargeResponse {
+                         merchantOrderId: String?,
+                         merchantTransactionId: String?,
+                         merchantInvoiceNumber: String?) async throws -> FiservTTPChargeResponse {
         
         do {
             await MainActor.run { self.isBusy = true }
 
             let response = try await self.fiservTTPCardReader.readCard(amount: bankersAmount(amount: amount),
                                                                        merchantOrderId: merchantOrderId,
-                                                                       merchantTransactionId: merchantTransactionId)
+                                                                       merchantTransactionId: merchantTransactionId,
+                                                                       merchantInvoiceNumber: merchantInvoiceNumber)
             await MainActor.run { self.isBusy = false }
             return response
         } catch {
@@ -639,6 +493,7 @@ class FiservTTPViewModel: ObservableObject {
     public func refundCard(amount: Decimal,
                            merchantOrderId: String? = nil,
                            merchantTransactionId: String? = nil,
+                           merchantInvoiceNumber: String? = nil,
                            referenceTransactionId: String? = nil,
                            referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
             
@@ -648,6 +503,7 @@ class FiservTTPViewModel: ObservableObject {
             let response = try await self.fiservTTPCardReader.refundCard(amount: bankersAmount(amount: amount),
                                                                          merchantOrderId: merchantOrderId,
                                                                          merchantTransactionId: merchantTransactionId,
+                                                                         merchantInvoiceNumber: merchantInvoiceNumber,
                                                                          referenceTransactionId: referenceTransactionId,
                                                                          referenceMerchantTransactionId: referenceMerchantTransactionId)
             
