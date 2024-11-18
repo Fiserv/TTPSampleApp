@@ -571,12 +571,6 @@ struct TTPView: View {
                         // CAN BE OTHER THAN ORIGINAL VALUE
                         TextField("Your Trans Id (Optional)", text: $merchantTransactionId)
                             .keyboardType(.default)
-// NA
-//                        TextField("Your Order Id (Optional)", text: $merchantOrderId)
-//                            .keyboardType(.default)
-// NA
-//                        TextField("Your Order Id (Optional)", text: $merchantInvoiceNumber)
-//                            .keyboardType(.default)
                         
                         Button("Refund Card Transaction", action: {
                             
