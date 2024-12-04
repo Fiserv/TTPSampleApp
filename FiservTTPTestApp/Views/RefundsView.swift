@@ -56,13 +56,8 @@ struct RefundsView: View {
                 Text("Read Card: true, Ref required")
                 TextField("ReferenceTransactionId", text: $viewModel.referenceTransactionId)
                     .keyboardType(.default)
-//                NA
-//                TextField("MerchantOrderId", text: $merchantOrderId)
-//                    .keyboardType(.default)
                 TextField("MerchantTransactionId", text: $merchantTransactionId)
                     .keyboardType(.default)
-//                TextField("MerchantTransactionId", text: $merchantInvoiceNumber)
-//                    .keyboardType(.default)
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
                 Button("Tagged UnMatched", action: {
@@ -117,24 +112,6 @@ struct RefundsView: View {
         }
     }
     
-//    func debitRefund() {
-//        func taggedRefundUnMatched() {
-//            Task {
-//                do {
-//                    let response = try await viewModel.refunds(amount: Decimal(self.amount),
-//                                                               refundTransactionType: .unmatched,
-//                                                               merchantTransactionId: self.merchantTransactionId,
-//                                                               referenceTransactionId: self.viewModel.referenceTransactionId)
-//                    
-//                    reponseWrapper = FiservTTPResponseWrapper(title: "Refunds [Debit])",
-//                                                              responseString: response.prettyJSON)
-//                } catch let error as FiservTTPCardReaderError {
-//                    errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you use the correct transactionId?")
-//                }
-//            }
-//        }
-//    }
-
     // ARGS                            MATCHED    UNMATCHED    OPEN
     //
     // READ CARD                        N           Y           Y
