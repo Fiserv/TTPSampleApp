@@ -84,9 +84,6 @@ struct RefundsView: View {
                 dismiss()
             }).buttonStyle(BorderlessButtonStyle())
         }
-        .onTapGesture {
-            hideKeyboard()
-        }
         .sheet(item: $reponseWrapper) { wrapper in
             FiservResponseWrapperView(responseWrapper: wrapper)
         }

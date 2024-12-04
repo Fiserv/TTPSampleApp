@@ -37,13 +37,6 @@ extension Encodable {
         return output
     }
 }
-#if canImport(UIKit)
-extension View {
-    func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-    }
-}
-#endif
 
 struct BillingAddress {
     var firstName: String = "John"
@@ -643,9 +636,6 @@ struct TTPView: View {
                     }
                 }
             }
-            .onTapGesture {
-                hideKeyboard()
-            }
             // You need to check whether the device supports Apple TapToPay
             .onAppear {
                 if !self.viewModel.readerIsSupported() {
@@ -686,9 +676,6 @@ struct TTPView: View {
             .sheet(item: $errorWrapper) { wrapper in
                 FiservTTPErrorView(errorWrapper: wrapper)
             }
-        }
-        .onTapGesture {
-            hideKeyboard()
         }
     }
 }
