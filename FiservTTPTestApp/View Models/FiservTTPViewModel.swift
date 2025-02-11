@@ -1,6 +1,6 @@
 //  FiservTTPViewModel
 //
-//  Copyright (c) 2022 - 2023 Fiserv, Inc.
+//  Copyright (c) 2022 - 2025 Fiserv, Inc.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,18 @@ class FiservTTPViewModel: ObservableObject {
     @Published var accountLinked: Bool = false
     @Published var cardValid: Bool = false
     @Published var cardReaderActive: Bool = false
+    
+    @Published var expectsToken: Bool = false
+    @Published var useAddress: Bool = false
+    @Published var createToken: Bool = false
+    
+    // USED FOR PAYMENT TYPE CAPTURE
+    @Published var authTransactionId: String?
+    // USED FOR CANCELS, RETURNS
+    @Published var referenceTransactionId: String = ""
+    // USED WHEN CREATE PAYMENT TYPE FLAG IS SET
+    // @Published var paymentTokenSourceRequest: Models.PaymentTokenSourceRequest?
+    @Published var paymentTokens: [Models.PaymentTokenSourceRequest]?
     
     // Used to re-initialize session if lost, requires that we have already established a session at least once
     private var readyForPayments: Bool = false
@@ -145,17 +157,300 @@ class FiservTTPViewModel: ObservableObject {
             throw error
         }
     }
+
+    public func accountVerification(billingAddress: BillingAddress,
+                                    createPaymentToken: Bool = false,
+                                    merchantTransactionId: String? = nil,
+                                    merchantOrderId: String? = nil,
+                                    merchantInvoiceNumber: String? = nil) async throws -> Models.AccountVerificationResponse {
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        await MainActor.run { self.isBusy = true }
+        
+        do {
+            
+            let transactionDetailsRequest = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
+                                                                             merchantOrderId: merchantOrderId,
+                                                                             merchantInvoiceNumber: merchantInvoiceNumber,
+                                                                             captureFlag: false,
+                                                                             createToken: createPaymentToken)
+            
+            var addressRequest: Models.AddressRequest?
+            var billingAddressRequest: Models.BillingAddressRequest?
+                        
+            if self.useAddress {
+                
+                addressRequest = Models.AddressRequest(street: billingAddress.streetName,
+                                                       houseNumberOrName: billingAddress.houseNumber,
+                                                       city: billingAddress.city,
+                                                       stateOrProvince: billingAddress.state,
+                                                       postalCode: billingAddress.postalCode,
+                                                       country: billingAddress.country)
+                
+                billingAddressRequest = Models.BillingAddressRequest(firstName: billingAddress.firstName,
+                                                                     lastName: billingAddress.lastName,
+                                                                     addressRequest: addressRequest)
+            }
+            
+            // Models.AccountVerificationResponse
+            let response = try await self.fiservTTPCardReader.accountVerification(transactionDetailsRequest: transactionDetailsRequest,
+                                                                                  paymentTokenSourceRequest: self.paymentTokens?.first,
+                                                                                  billingAddressRequest: billingAddressRequest)
+            await MainActor.run {
+                
+                // WARNING
+                self.createToken = false
+                
+                if response.gatewayResponse?.transactionState == "VERIFIED" {
+                    
+                    paymentTokenHelper(from: "accountVerification:Verified",
+                                       sourceResponse: response.source,
+                                       tokensResponse: response.paymentTokens)
+                }
+            }
+            
+            await MainActor.run { self.isBusy = false }
+            return response
+            
+        }  catch {
+            await MainActor.run { self.isBusy = false }
+            throw error
+        }
+    }
+    
+    public func tokenizeCard(merchantTransactionId: String? = nil,
+                             merchantOrderId: String? = nil,
+                             merchantInvoiceNumber: String? = nil) async throws -> Models.TokenizeCardResponse {
+        
+        let transactionDetailsRequest = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
+                                                                         merchantOrderId: merchantOrderId,
+                                                                         merchantInvoiceNumber: merchantInvoiceNumber)
+        
+        await MainActor.run { self.isBusy = true }
+        
+        do {
+            
+            // Models.TokenizeCardResponse
+            let response = try await self.fiservTTPCardReader.tokenizeCard(transactionDetailsRequest: transactionDetailsRequest)
+            
+            await MainActor.run {
+                
+                // Grab the PaymentToken
+                if response.gatewayResponse?.transactionState == "AUTHORIZED" {
+                    
+                    paymentTokenHelper(from: "tokenize:Authorized",
+                                       sourceResponse: response.source,
+                                       tokensResponse: response.paymentTokens)
+                }
+                
+                self.isBusy = false
+            }
+            return response
+        } catch {
+            await MainActor.run { self.isBusy = false }
+            throw error
+        }
+    }
+    
+    public func transactionInquiry(referenceTransactionId: String? = nil,
+                                   referenceMerchantTransactionId: String? = nil,
+                                   referenceOrderId: String? = nil,
+                                   referenceMerchantOrderId: String? = nil) async throws -> [Models.InquireResponse] {
+        
+        let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: referenceTransactionId,
+                                                                                    referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                                                    referenceOrderId: referenceOrderId,
+                                                                                    referenceMerchantOrderId: referenceMerchantOrderId,
+                                                                                    referenceClientRequestId: nil)
+        await MainActor.run { self.isBusy = true }
+        
+        do {
+            
+            let response = try await self.fiservTTPCardReader.transactionInquiry(referenceTransactionDetailsRequest: referenceTransactionDetails)
+            
+            await MainActor.run { self.isBusy = false }
+            return response
+        } catch {
+            await MainActor.run { self.isBusy = false }
+            throw error
+        }
+    }
+
+    // TRANS TYPE           CAP FLAG        READ CARD       CREATE TOKEN
+    //
+    // USE PAY_TOKEN        TRUE            FALSE           FALSE
+    //
+    // AUTH                 FALSE           TRUE            FALSE
+    //
+    // CAPTURE              TRUE            FALSE           FALSE
+    //
+    // SALE                 TRUE            TRUE            FALSE
+    
+    // ADDITIONAL
+    //
+    // AUTH + CAPTURE == SALE
+    // SALE == CURRENT SDK
+    //
+    // ARGS                            SALE     AUTH    CAPTURE   TOKEN
+    //
+    // SOURCE (CARD DATA)               Y        Y         N        N
+    // MERCHANT DETAILS                 Y        Y         Y        Y
+    // CAPTURE FLAG (MD)                T        F         T        T
+    // TRANSACTION DETAILS              Y        Y         Y        Y
+    // REFERENCE TRANSACTION DETAILS    N        N         B        N
+    
+    public func charges(amount: Decimal,
+                        createPaymentToken: Bool = false,
+                        transactionType: PaymentTransactionType,
+                        paymentTokenSource: Models.PaymentTokenSourceRequest? = nil,
+                        merchantOrderId: String? = nil,
+                        merchantTransactionId: String? = nil,
+                        merchantInvoiceNumber: String? = nil,
+                        referenceTransactionId: String? = nil,
+                        referenceMerchantTransactionId: String? = nil,
+                        referenceOrderId: String? = nil,
+                        referenceMerchantOrderId: String? = nil) async throws -> Models.CommerceHubResponse {
+        
+        await MainActor.run { self.isBusy = true }
+        
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        
+        do {
+            // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            
+            let captureFlag = transactionType != .auth
+            
+            let transactionDetails = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
+                                                                      merchantOrderId: merchantOrderId,
+                                                                      merchantInvoiceNumber: merchantInvoiceNumber,
+                                                                      captureFlag: captureFlag,
+                                                                      createToken: createPaymentToken)
+            
+            var referenceTransactionDetails: Models.ReferenceTransactionDetailsRequest?
+            // EXPECTS PREVIOUS AUTH
+            if transactionType == .capture {
+                
+                referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: referenceTransactionId)
+            }
+            
+            // Models.CommerceHubResponse
+            let response = try await self.fiservTTPCardReader.charges(amount: bankersAmount(amount: amount),
+                                                                      transactionType: transactionType,
+                                                                      transactionDetailsRequest: transactionDetails,
+                                                                      referenceTransactionDetailsRequest: referenceTransactionDetails,
+                                                                      paymentTokenSourceRequest: paymentTokenSource)
+            
+            await MainActor.run {
+
+                // WARNING
+                self.createToken = false
+                
+                // PAYMENT TYPE CAPTURE, SALE, PAYMENT TOKEN
+                if response.gatewayResponse?.transactionState == "CAPTURED" {
+                    
+                    // Grab the transactionId
+                    self.referenceTransactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId ?? ""
+                    // Check for Payments Tokens
+                    paymentTokenHelper(from: "charges:CAPTURED",
+                                       sourceResponse: response.source,
+                                       tokensResponse: response.paymentTokens)
+                }
+                
+                // PAYMENT TYPE AUTH
+                if response.gatewayResponse?.transactionState == "AUTHORIZED" {
+                    
+                    // This will enable the .capture paymentType
+                    if let transactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId {
+                        
+                        // Auth can be cancelled
+                        // Grab the transactionId (and use it as an authorization)
+                        self.referenceTransactionId = transactionId
+                        self.authTransactionId = transactionId
+                        // Check for Payments Tokens
+                        paymentTokenHelper(from: "charges:AUTHORIZED",
+                                           sourceResponse: response.source,
+                                           tokensResponse: response.paymentTokens)
+                    }
+                }
+                
+                self.isBusy = false
+            }
+            
+            return response
+            
+        }  catch {
+            await MainActor.run { self.isBusy = false }
+            throw error
+        }
+    }
+    
+    // ARGS                            MATCHED    UNMATCHED    OPEN
+    //
+    // READ CARD                        N           Y           Y
+    // MERCHANT DETAILS                 Y           Y           Y
+    // CAPTURE FLAG                     F           T           T
+    // TRANSACTION DETAILS              N           Y           Y
+    // REFERENCE TRANSACTION DETAILS    Y           Y           N
+    
+    // NEW
+    public func refunds(amount: Decimal,
+                        refundTransactionType: RefundTransactionType,
+                        merchantOrderId: String? = nil,
+                        merchantTransactionId: String? = nil,
+                        merchantInvoiceNumber: String? = nil,
+                        referenceTransactionId: String? = nil,
+                        referenceMerchantTransactionId: String? = nil,
+                        referenceOrderId: String? = nil,
+                        referenceMerchantOrderId: String? = nil) async throws -> Models.CommerceHubResponse {
+        
+        await MainActor.run { self.isBusy = true }
+        
+        do {
+            
+            var referenceTransactionDetails: Models.ReferenceTransactionDetailsRequest?
+            
+            if refundTransactionType != .open {
+                
+                referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: referenceTransactionId,
+                                                                                        referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                                                        referenceOrderId: referenceOrderId,
+                                                                                        referenceMerchantOrderId: referenceMerchantOrderId)
+            }
+            
+            let captureFlag = refundTransactionType != .matched
+            
+            // OPTIONAL WHEN refundTransactionType == .matched
+            let transactionDetailsRequest = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
+                                                                             merchantOrderId: merchantOrderId,
+                                                                             merchantInvoiceNumber: merchantInvoiceNumber,
+                                                                             captureFlag: captureFlag)
+            
+            let response = try await self.fiservTTPCardReader.refunds(amount: bankersAmount(amount: amount),
+                                                                      refundTransactionType: refundTransactionType,
+                                                                      transactionDetails: transactionDetailsRequest,
+                                                                      referenceTransactionDetails: referenceTransactionDetails)
+            
+            await MainActor.run { self.isBusy = false }
+            return response
+        } catch {
+            await MainActor.run { self.isBusy = false }
+            throw error
+        }
+    }
     
     // READ CARD
     public func readCard(amount: Decimal,
-                         merchantOrderId: String,
-                         merchantTransactionId: String) async throws -> FiservTTPChargeResponse {
+                         merchantOrderId: String?,
+                         merchantTransactionId: String?,
+                         merchantInvoiceNumber: String?) async throws -> FiservTTPChargeResponse {
+        
         do {
             await MainActor.run { self.isBusy = true }
 
             let response = try await self.fiservTTPCardReader.readCard(amount: bankersAmount(amount: amount),
                                                                        merchantOrderId: merchantOrderId,
-                                                                       merchantTransactionId: merchantTransactionId)
+                                                                       merchantTransactionId: merchantTransactionId,
+                                                                       merchantInvoiceNumber: merchantInvoiceNumber)
             await MainActor.run { self.isBusy = false }
             return response
         } catch {
@@ -205,10 +500,37 @@ class FiservTTPViewModel: ObservableObject {
         }
     }
     
+    // NEW
+    public func cancels(amount: Decimal,
+                        referenceTransactionId: String? = nil,
+                        referenceOrderId: String? = nil,
+                        referenceMerchantTransactionId: String? = nil,
+                        referenceMerchantOrderId: String? = nil) async throws -> Models.CommerceHubResponse {
+        
+        let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: referenceTransactionId,
+                                                                                    referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                                                    referenceOrderId: referenceOrderId,
+                                                                                    referenceMerchantOrderId: referenceMerchantOrderId)
+        await MainActor.run { self.isBusy = true }
+        
+        do {
+            
+            let response = try await self.fiservTTPCardReader.cancels(amount: bankersAmount(amount: amount),
+                                                                      referenceTransactionDetailsRequest: referenceTransactionDetails)
+            
+            await MainActor.run { self.isBusy = false }
+            return response
+        } catch {
+            await MainActor.run { self.isBusy = false }
+            throw error
+        }
+    }
+    
     // REFUND CARD
     public func refundCard(amount: Decimal,
                            merchantOrderId: String? = nil,
                            merchantTransactionId: String? = nil,
+                           merchantInvoiceNumber: String? = nil,
                            referenceTransactionId: String? = nil,
                            referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
             
@@ -218,6 +540,7 @@ class FiservTTPViewModel: ObservableObject {
             let response = try await self.fiservTTPCardReader.refundCard(amount: bankersAmount(amount: amount),
                                                                          merchantOrderId: merchantOrderId,
                                                                          merchantTransactionId: merchantTransactionId,
+                                                                         merchantInvoiceNumber: merchantInvoiceNumber,
                                                                          referenceTransactionId: referenceTransactionId,
                                                                          referenceMerchantTransactionId: referenceMerchantTransactionId)
             
@@ -248,10 +571,41 @@ class FiservTTPViewModel: ObservableObject {
             throw error
         }
     }
-
+    
+    // DECIMAL NUMBERS ROUNDED TO BANKERS
     private func bankersAmount(amount: Decimal) -> Decimal {
         
         return amount.rounded(2, .bankers)
+    }
+    
+    // SAVE ANY RETURNED PAYMENT TOKENS
+    private func paymentTokenHelper(from: String, sourceResponse: Models.SourceResponse?, tokensResponse: [Models.PaymentTokenResponse]?) {
+        
+        guard let sourceResponse = sourceResponse, let tokensResponse = tokensResponse else {
+            return
+        }
+        
+        self.paymentTokens = [Models.PaymentTokenSourceRequest]()
+        
+        tokensResponse.forEach { token in
+
+            print("** paymentTokenHelper (save token) \(from) ** ")
+            let paymentToken = Models.PaymentTokenSourceRequest.init(sourceType: "PaymentToken", // sourceResponse.sourceType ?? "",
+                                                                     tokenData: token.tokenData ?? "",
+                                                                     tokenSource: token.tokenSource ?? "",
+                                                                     declineDuplicates: true,
+                                                                  card: Models.PaymentTokenCardRequest.init(
+                                                                    expirationMonth: sourceResponse.card?.expirationMonth ?? "",
+                                                                    expirationYear: sourceResponse.card?.expirationYear ?? ""))
+            
+            print("paymentToken.sourceType: \(paymentToken.sourceType)")
+            print("paymentToken.card.expirationMonth: \(paymentToken.card.expirationMonth)")
+            print("paymentToken.card.expirationYear: \(paymentToken.card.expirationYear)")
+            print("paymentToken.tokenData: \(paymentToken.tokenData)")
+            print("paymentToken.tokenSource: \(paymentToken.tokenSource)")
+            
+            self.paymentTokens?.append(paymentToken)
+        }
     }
 }
 
