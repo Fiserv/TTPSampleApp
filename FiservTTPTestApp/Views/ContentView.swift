@@ -1,6 +1,6 @@
 //  ContentView
 //
-//  Copyright (c) 2022 - 2023 Fiserv, Inc.
+//  Copyright (c) 2022 - 2025 Fiserv, Inc.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,7 @@ struct ContentView: View {
                     viewModel: FiservTTPViewModel(configuration: configuration),
                     merchantId: configuration.merchantId,
                     merchantName: configuration.merchantName,
-                    appleTtpMerchantId: configuration.appleTtpMerchantId,
+                    appleTtpMerchantId: configuration.appleTtpMerchantId ?? String(), 
                     currencyCode: configuration.currencyCode)
         }
     }

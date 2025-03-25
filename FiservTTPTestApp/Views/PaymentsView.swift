@@ -1,9 +1,24 @@
+//  ContentView
 //
-//  PaymentsView.swift
-//  FiservTTPTestApp
+//  Copyright (c) 2022 - 2025 Fiserv, Inc.
 //
-//  Created by Tilt, Richard (Alpharetta) on 8/2/24.
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
 //
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
 
 import SwiftUI
 import FiservTTP
@@ -111,17 +126,7 @@ struct PaymentsView: View {
     }
     
     func clearPaymentToken() {
-        
-        viewModel.paymentTokenSourceRequest = nil
-        
-        if viewModel.paymentTokenSourceRequest == nil {
-            
-            print("Payment Token cleared")
-            
-        } else {
-            
-            print("Clear Payment Token Failed")
-        }
+        viewModel.paymentTokens = nil
     }
     
     func sale() {
@@ -135,8 +140,6 @@ struct PaymentsView: View {
                                                             merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
                                                             merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber)
                 
-                viewModel.createToken = false
-                
                 reponseWrapper = FiservTTPResponseWrapper(title: "Sale",
                                                           responseString: response.prettyJSON)
                 
@@ -148,14 +151,7 @@ struct PaymentsView: View {
     
     func auth(fromToken: Bool) {
         
-        if fromToken == false && viewModel.paymentTokenSourceRequest != nil {
-            
-            print("EXPECTED PAYMENT TOKEN TO BE NIL")
-        }
-        
-        if fromToken == true && viewModel.paymentTokenSourceRequest == nil {
-            
-            print("EXPECTED PAYMENT TOKEN")
+        if fromToken == true && viewModel.paymentTokens == nil {
             
             let error = FiservTTPCardReaderError(title: "Authorization", localizedDescription: String(localized: "Expected a pre-existing payment token."))
             errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "")
@@ -167,11 +163,10 @@ struct PaymentsView: View {
                 let response =  try await viewModel.charges(amount: Decimal(self.amount),
                                                             createPaymentToken: fromToken ? false : viewModel.createToken,
                                                             transactionType: PaymentTransactionType.auth,
-                                                            paymentTokenSource: viewModel.paymentTokenSourceRequest,
+                                                            paymentTokenSource: fromToken ? viewModel.paymentTokens?.first : nil,
                                                             merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
                                                             merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
                                                             merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber)
-                viewModel.createToken = false
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Auth",
                                                           responseString: response.prettyJSON)
@@ -204,11 +199,18 @@ struct PaymentsView: View {
     
     func paymentToken() {
         
+        if viewModel.paymentTokens == nil {
+            
+            let error = FiservTTPCardReaderError(title: "Sale from Token", localizedDescription: String(localized: "Expected a pre-existing payment token."))
+            errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "")
+            return
+        }
+        
         Task {
             do {
                 let response = try await viewModel.charges(amount: Decimal(self.amount),
                                                            transactionType: PaymentTransactionType.paymentToken,
-                                                           paymentTokenSource: viewModel.paymentTokenSourceRequest,
+                                                           paymentTokenSource: viewModel.paymentTokens?.first,
                                                            merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
                                                            merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
                                                            merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber)
