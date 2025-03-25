@@ -1,6 +1,6 @@
 //  FiservTTPViewModel
 //
-//  Copyright (c) 2022 - 2023 Fiserv, Inc.
+//  Copyright (c) 2022 - 2025 Fiserv, Inc.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,7 @@ class FiservTTPViewModel: ObservableObject {
     @Published var cardValid: Bool = false
     @Published var cardReaderActive: Bool = false
     
+    @Published var expectsToken: Bool = false
     @Published var useAddress: Bool = false
     @Published var createToken: Bool = false
     
@@ -39,8 +40,9 @@ class FiservTTPViewModel: ObservableObject {
     @Published var authTransactionId: String?
     // USED FOR CANCELS, RETURNS
     @Published var referenceTransactionId: String = ""
-    // USED FOR PAYMENT TYPE CAPTURE
-    @Published var paymentTokenSourceRequest: Models.PaymentTokenSourceRequest?
+    // USED WHEN CREATE PAYMENT TYPE FLAG IS SET
+    // @Published var paymentTokenSourceRequest: Models.PaymentTokenSourceRequest?
+    @Published var paymentTokens: [Models.PaymentTokenSourceRequest]?
     
     // Used to re-initialize session if lost, requires that we have already established a session at least once
     private var readyForPayments: Bool = false
@@ -155,42 +157,62 @@ class FiservTTPViewModel: ObservableObject {
             throw error
         }
     }
-    
+
     public func accountVerification(billingAddress: BillingAddress,
+                                    createPaymentToken: Bool = false,
                                     merchantTransactionId: String? = nil,
                                     merchantOrderId: String? = nil,
                                     merchantInvoiceNumber: String? = nil) async throws -> Models.AccountVerificationResponse {
-        
-        let transactionDetailsRequest = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
-                                                                         merchantOrderId: merchantOrderId,
-                                                                         merchantInvoiceNumber: merchantInvoiceNumber)
-        var addressRequest: Models.AddressRequest?
-        var billingAddressRequest: Models.BillingAddressRequest?
-        
-        if self.useAddress {
-            
-            addressRequest = Models.AddressRequest(street: billingAddress.streetName,
-                                                   houseNumberOrName: billingAddress.houseNumber,
-                                                   city: billingAddress.city,
-                                                   stateOrProvince: billingAddress.state,
-                                                   postalCode: billingAddress.postalCode,
-                                                   country: billingAddress.country)
-            
-            billingAddressRequest = Models.BillingAddressRequest(firstName: billingAddress.firstName,
-                                                                 lastName: billingAddress.lastName,
-                                                                 addressRequest: addressRequest)
-        }
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        await MainActor.run { self.isBusy = true }
         
         do {
-        
+            
+            let transactionDetailsRequest = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
+                                                                             merchantOrderId: merchantOrderId,
+                                                                             merchantInvoiceNumber: merchantInvoiceNumber,
+                                                                             captureFlag: false,
+                                                                             createToken: createPaymentToken)
+            
+            var addressRequest: Models.AddressRequest?
+            var billingAddressRequest: Models.BillingAddressRequest?
+                        
+            if self.useAddress {
+                
+                addressRequest = Models.AddressRequest(street: billingAddress.streetName,
+                                                       houseNumberOrName: billingAddress.houseNumber,
+                                                       city: billingAddress.city,
+                                                       stateOrProvince: billingAddress.state,
+                                                       postalCode: billingAddress.postalCode,
+                                                       country: billingAddress.country)
+                
+                billingAddressRequest = Models.BillingAddressRequest(firstName: billingAddress.firstName,
+                                                                     lastName: billingAddress.lastName,
+                                                                     addressRequest: addressRequest)
+            }
+            
+            // Models.AccountVerificationResponse
             let response = try await self.fiservTTPCardReader.accountVerification(transactionDetailsRequest: transactionDetailsRequest,
+                                                                                  paymentTokenSourceRequest: self.paymentTokens?.first,
                                                                                   billingAddressRequest: billingAddressRequest)
+            await MainActor.run {
+                
+                // WARNING
+                self.createToken = false
+                
+                if response.gatewayResponse?.transactionState == "VERIFIED" {
+                    
+                    paymentTokenHelper(from: "accountVerification:Verified",
+                                       sourceResponse: response.source,
+                                       tokensResponse: response.paymentTokens)
+                }
+            }
             
             await MainActor.run { self.isBusy = false }
-            
             return response
             
-        } catch {
+        }  catch {
             await MainActor.run { self.isBusy = false }
             throw error
         }
@@ -204,25 +226,24 @@ class FiservTTPViewModel: ObservableObject {
                                                                          merchantOrderId: merchantOrderId,
                                                                          merchantInvoiceNumber: merchantInvoiceNumber)
         
+        await MainActor.run { self.isBusy = true }
+        
         do {
             
+            // Models.TokenizeCardResponse
             let response = try await self.fiservTTPCardReader.tokenizeCard(transactionDetailsRequest: transactionDetailsRequest)
             
-            // Grab the PaymentToken
-            if response.gatewayResponse?.transactionState == "AUTHORIZED" {
+            await MainActor.run {
                 
-                await MainActor.run {
+                // Grab the PaymentToken
+                if response.gatewayResponse?.transactionState == "AUTHORIZED" {
                     
-                    let paymentTokenCardRequest = Models.PaymentTokenCardRequest(expirationMonth: response.source?.card?.expirationMonth ?? "",
-                                                                                 expirationYear: response.source?.card?.expirationYear ?? "")
-                    
-                    self.paymentTokenSourceRequest = Models.PaymentTokenSourceRequest(sourceType: "PaymentToken",
-                                                                                     tokenData: response.paymentTokens?.first?.tokenData ?? "",
-                                                                                     tokenSource: response.paymentTokens?.first?.tokenSource ?? "",
-                                                                                     declineDuplicates: false,
-                                                                                     card: paymentTokenCardRequest)
-                    self.isBusy = false
+                    paymentTokenHelper(from: "tokenize:Authorized",
+                                       sourceResponse: response.source,
+                                       tokensResponse: response.paymentTokens)
                 }
+                
+                self.isBusy = false
             }
             return response
         } catch {
@@ -241,6 +262,8 @@ class FiservTTPViewModel: ObservableObject {
                                                                                     referenceOrderId: referenceOrderId,
                                                                                     referenceMerchantOrderId: referenceMerchantOrderId,
                                                                                     referenceClientRequestId: nil)
+        await MainActor.run { self.isBusy = true }
+        
         do {
             
             let response = try await self.fiservTTPCardReader.transactionInquiry(referenceTransactionDetailsRequest: referenceTransactionDetails)
@@ -291,7 +314,6 @@ class FiservTTPViewModel: ObservableObject {
         await MainActor.run { self.isBusy = true }
         
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        // var chargesResponse: Models.CommerceHubResponse?
         
         do {
             // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -311,34 +333,49 @@ class FiservTTPViewModel: ObservableObject {
                 referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: referenceTransactionId)
             }
             
+            // Models.CommerceHubResponse
             let response = try await self.fiservTTPCardReader.charges(amount: bankersAmount(amount: amount),
                                                                       transactionType: transactionType,
                                                                       transactionDetailsRequest: transactionDetails,
                                                                       referenceTransactionDetailsRequest: referenceTransactionDetails,
                                                                       paymentTokenSourceRequest: paymentTokenSource)
+            
+            await MainActor.run {
+
+                // WARNING
+                self.createToken = false
                 
-            // PAYMENT TYPE CAPTURE, SALE, PAYMENT TOKEN
-            if response.gatewayResponse?.transactionState == "CAPTURED" {
-                await MainActor.run {
+                // PAYMENT TYPE CAPTURE, SALE, PAYMENT TOKEN
+                if response.gatewayResponse?.transactionState == "CAPTURED" {
+                    
                     // Grab the transactionId
                     self.referenceTransactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId ?? ""
+                    // Check for Payments Tokens
+                    paymentTokenHelper(from: "charges:CAPTURED",
+                                       sourceResponse: response.source,
+                                       tokensResponse: response.paymentTokens)
                 }
-            }
-            
-            // PAYMENT TYPE AUTH
-            if response.gatewayResponse?.transactionState == "AUTHORIZED" {
-
-                // This will enable the .capture paymentType
-                if let transactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId {
-                    await MainActor.run {
+                
+                // PAYMENT TYPE AUTH
+                if response.gatewayResponse?.transactionState == "AUTHORIZED" {
+                    
+                    // This will enable the .capture paymentType
+                    if let transactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId {
+                        
                         // Auth can be cancelled
                         // Grab the transactionId (and use it as an authorization)
                         self.referenceTransactionId = transactionId
                         self.authTransactionId = transactionId
+                        // Check for Payments Tokens
+                        paymentTokenHelper(from: "charges:AUTHORIZED",
+                                           sourceResponse: response.source,
+                                           tokensResponse: response.paymentTokens)
                     }
                 }
+                
+                self.isBusy = false
             }
-            await MainActor.run { self.isBusy = false }
+            
             return response
             
         }  catch {
@@ -366,6 +403,8 @@ class FiservTTPViewModel: ObservableObject {
                         referenceOrderId: String? = nil,
                         referenceMerchantOrderId: String? = nil) async throws -> Models.CommerceHubResponse {
         
+        await MainActor.run { self.isBusy = true }
+        
         do {
             
             var referenceTransactionDetails: Models.ReferenceTransactionDetailsRequest?
@@ -377,8 +416,6 @@ class FiservTTPViewModel: ObservableObject {
                                                                                         referenceOrderId: referenceOrderId,
                                                                                         referenceMerchantOrderId: referenceMerchantOrderId)
             }
-            
-            await MainActor.run { self.isBusy = true }
             
             let captureFlag = refundTransactionType != .matched
             
@@ -474,10 +511,10 @@ class FiservTTPViewModel: ObservableObject {
                                                                                     referenceMerchantTransactionId: referenceMerchantTransactionId,
                                                                                     referenceOrderId: referenceOrderId,
                                                                                     referenceMerchantOrderId: referenceMerchantOrderId)
+        await MainActor.run { self.isBusy = true }
         
         do {
-            await MainActor.run { self.isBusy = true }
-
+            
             let response = try await self.fiservTTPCardReader.cancels(amount: bankersAmount(amount: amount),
                                                                       referenceTransactionDetailsRequest: referenceTransactionDetails)
             
@@ -534,10 +571,40 @@ class FiservTTPViewModel: ObservableObject {
             throw error
         }
     }
-
+    
+    // DECIMAL NUMBERS ROUNDED TO BANKERS
     private func bankersAmount(amount: Decimal) -> Decimal {
         
         return amount.rounded(2, .bankers)
+    }
+    
+    // SAVE ANY RETURNED PAYMENT TOKENS
+    private func paymentTokenHelper(from: String, sourceResponse: Models.SourceResponse?, tokensResponse: [Models.PaymentTokenResponse]?) {
+        
+        guard let sourceResponse = sourceResponse, let tokensResponse = tokensResponse else {
+            return
+        }
+        
+        self.paymentTokens = [Models.PaymentTokenSourceRequest]()
+        
+        tokensResponse.forEach { token in
+
+            let paymentToken = Models.PaymentTokenSourceRequest.init(sourceType: "PaymentToken",
+                                                                     tokenData: token.tokenData ?? "",
+                                                                     tokenSource: token.tokenSource ?? "",
+                                                                     declineDuplicates: true,
+                                                                     card: Models.PaymentTokenCardRequest.init(
+                                                                     expirationMonth: sourceResponse.card?.expirationMonth ?? "",
+                                                                     expirationYear: sourceResponse.card?.expirationYear ?? ""))
+            
+            print("paymentToken.sourceType: \(paymentToken.sourceType)")
+            print("paymentToken.card.expirationMonth: \(paymentToken.card.expirationMonth)")
+            print("paymentToken.card.expirationYear: \(paymentToken.card.expirationYear)")
+            print("paymentToken.tokenData: \(paymentToken.tokenData)")
+            print("paymentToken.tokenSource: \(paymentToken.tokenSource)")
+            
+            self.paymentTokens?.append(paymentToken)
+        }
     }
 }
 

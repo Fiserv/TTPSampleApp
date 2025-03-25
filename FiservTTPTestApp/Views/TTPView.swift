@@ -1,6 +1,6 @@
 //  ContentView
 //
-//  Copyright (c) 2022 - 2023 Fiserv, Inc.
+//  Copyright (c) 2022 - 2025 Fiserv, Inc.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -246,7 +246,41 @@ struct TTPView: View {
                     
                     Section("X. Account Verification") {
                         
-                        Text("Read Card: true")
+                        // Payment Token not yet created
+                        if self.viewModel.paymentTokens == nil {
+                            
+                            Text("No Payment Token available")
+                            
+                            Text("Read Card: true")
+                            
+                            Toggle(isOn: $viewModel.createToken) {
+                                Text("Create Payment Token")
+                            }
+                        }
+                        
+                        // Payment Token available
+                        if self.viewModel.paymentTokens != nil {
+                            
+                            Text("Payment Token available")
+                            
+                            Button ("Clear Payment Token", action: {
+                                
+                                viewModel.paymentTokens = nil
+                                
+                            }).buttonStyle(BorderlessButtonStyle())
+                            
+                            Toggle(isOn: $viewModel.expectsToken) {
+                                Text("Use Payment Token")
+                            }
+                            
+                            if self.viewModel.expectsToken {
+                                Text("Read Card: false")
+                            } else {
+                                Text("Read Card: true")
+                            }
+                            
+                            
+                        }
                         
                         Button ("Account Verification", action: {
                             
@@ -373,7 +407,7 @@ struct TTPView: View {
                                                                                       merchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId),
                                                                                       merchantInvoiceNumber: (self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber))
                                     
-                                    reponseWrapper = FiservTTPResponseWrapper(title: "Charge Response", 
+                                    reponseWrapper = FiservTTPResponseWrapper(title: "Charge Response",
                                                                               responseString: chargeResponse.prettyJSON)
                                     
                                     self.transactionId = chargeResponse.gatewayResponse?.transactionProcessingDetails?.transactionId ?? ""
@@ -421,7 +455,7 @@ struct TTPView: View {
                                                                 referenceMerchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId),
                                                                 referenceMerchantOrderId: (self.merchantOrderId.isEmpty ? nil : self.merchantOrderId))
                                     
-                                    reponseWrapper = FiservTTPResponseWrapper(title: "Inquire Response(s)", 
+                                    reponseWrapper = FiservTTPResponseWrapper(title: "Inquire Response(s)",
                                                                               responseString: response.prettyJSON)
                                     
                                 } catch let error as FiservTTPCardReaderError {
@@ -454,7 +488,7 @@ struct TTPView: View {
                                                                     referenceTransactionId: (self.transactionId.isEmpty ? nil : self.transactionId),
                                                                     referenceMerchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId))
                                     
-                                    reponseWrapper = FiservTTPResponseWrapper(title: "Void Response", 
+                                    reponseWrapper = FiservTTPResponseWrapper(title: "Void Response",
                                                                               responseString: response.prettyJSON)
                                     
                                 } catch let error as FiservTTPCardReaderError {
@@ -493,7 +527,7 @@ struct TTPView: View {
                                                                     referenceTransactionId: (self.transactionId.isEmpty ? nil : self.transactionId),
                                                                     referenceMerchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId))
                                     
-                                    reponseWrapper = FiservTTPResponseWrapper(title: "Refund Response", 
+                                    reponseWrapper = FiservTTPResponseWrapper(title: "Refund Response",
                                                                               responseString: response.prettyJSON)
                                     
                                     self.refundTransactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId ?? ""

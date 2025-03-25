@@ -1,9 +1,24 @@
+//  ContentView
 //
-//  BillingAddressView.swift
-//  FiservTTPTestApp
+//  Copyright (c) 2022 - 2025 Fiserv, Inc.
 //
-//  Created by Tilt, Richard (Alpharetta) on 7/31/24.
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
 //
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
 
 import SwiftUI
 import FiservTTP
@@ -65,17 +80,22 @@ struct BillingAddressView: View {
     }
     
     func accountVerification() {
+        
         Task {
+            
             do {
+                
                 let response = try await viewModel.accountVerification(billingAddress: self.billingAddress,
-                                                                       merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
-                                                                       merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
-                                                                       merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber)
+                                                                       createPaymentToken: self.viewModel.createToken,
+                                    merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
+                                    merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
+                                    merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber)
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Account Verification",
                                                           responseString: response.prettyJSON)
 
             } catch let error as FiservTTPCardReaderError {
+                
                 errorWrapper = FiservTTPErrorWrapper(error: error, guidance: "Did you use the correct transactionId?")
             }
         }
