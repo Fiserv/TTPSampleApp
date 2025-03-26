@@ -244,7 +244,7 @@ struct TTPView: View {
                         }
                     }
                     
-                    Section("X. Account Verification") {
+                    Section("5. Account Verification") {
                         
                         // Payment Token not yet created
                         if self.viewModel.paymentTokens == nil {
@@ -290,7 +290,7 @@ struct TTPView: View {
                         }).buttonStyle(BorderlessButtonStyle())
                     }
                     
-                    Section("X. Tokenize Card") {
+                    Section("6. Tokenize Card") {
                         Text("Read Card: true")
                         Button ("Tokenize Card", action: {
                             
@@ -313,7 +313,7 @@ struct TTPView: View {
                         }).buttonStyle(BorderlessButtonStyle())
                     }
                     
-                    Section("X. Charges") {
+                    Section("7. Charges") {
                         Button ("Payment Types", action: {
                             
                             shouldPresentPaymentsView.toggle()
@@ -321,7 +321,7 @@ struct TTPView: View {
                         }).buttonStyle(BorderlessButtonStyle())
                     }
                     
-                    Section("X. Inquire") {
+                    Section("8. Inquire") {
                         Text("Read Card: false")
                         Text("Expects a previous Ref Trans Id \nSessionless")
                         TextField("ReferenceTransactionId", text: $viewModel.referenceTransactionId)
@@ -346,7 +346,7 @@ struct TTPView: View {
                         }).buttonStyle(BorderlessButtonStyle())
                     }
                     
-                    Section("X. Refunds") {
+                    Section("9. Refunds") {
                         Button ("Refund Types", action: {
                             
                             shouldPresentRefundsView.toggle()
@@ -354,7 +354,7 @@ struct TTPView: View {
                         }).buttonStyle(BorderlessButtonStyle())
                     }
                     
-                    Section("X. Cancels") {
+                    Section("10. Cancels") {
                         Text("Read Card: false")
                         Text("Expects a previous Ref Trans Id \nSessionless")
                         TextField("ReferenceTransactionId", text: $viewModel.referenceTransactionId)
@@ -382,7 +382,7 @@ struct TTPView: View {
                         }).buttonStyle(BorderlessButtonStyle())
                     }
                     
-                    Section("5. Accept a TTP Payment") {
+                    Section("X. Accept a TTP Payment [Deprecated]") {
                         
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
@@ -430,7 +430,7 @@ struct TTPView: View {
                 
                 Group {
                     
-                    Section("6. Inquire a TTP Payment") {
+                    Section("X. Inquire a TTP Payment [Deprecated]") {
                         
                         TextField("Ref TransactionId", text: $transactionId)
                             .keyboardType(.default)
@@ -467,7 +467,7 @@ struct TTPView: View {
                         }).buttonStyle(BorderlessButtonStyle())
                     }
                     
-                    Section("7. Void a TTP Payment") {
+                    Section("X. Void a TTP Payment [Deprecated]") {
                         
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
@@ -505,7 +505,7 @@ struct TTPView: View {
 
                 Group {
                     
-                    Section("8a. Tagged Refund Matched [Trans ID + NO TAP, Original Card]") {
+                    Section("X. Tagged Refund Matched [Deprecated] [Trans ID + NO TAP, Original Card]") {
                         
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
@@ -543,7 +543,7 @@ struct TTPView: View {
                         }).buttonStyle(BorderlessButtonStyle())
                     }
                     
-                    Section("8b. Debit Refund [Trans ID + TAP, Same Card]") {
+                    Section("X. Debit Refund [Deprecated] [Trans ID + TAP, Same Card]") {
                         
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
@@ -588,7 +588,7 @@ struct TTPView: View {
                         }).buttonStyle(BorderlessButtonStyle())
                     }
                     
-                    Section("8c. Tagged Refund Unmatched [Trans ID + TAP, Different Card]") {
+                    Section("X. Tagged Refund Unmatched [Deprecated] [Trans ID + TAP, Different Card]") {
                         
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
@@ -627,7 +627,7 @@ struct TTPView: View {
                         }).buttonStyle(BorderlessButtonStyle())
                     }
                     
-                    Section("8d. Open Refund [No Trans ID + TAP, Any Card]") {
+                    Section("X. Open Refund [Deprecated] [No Trans ID + TAP, Any Card]") {
                         
                         TextField("Amount", value: $amount, format: .currency(code: self.currencyCode))
                             .keyboardType(.decimalPad)
