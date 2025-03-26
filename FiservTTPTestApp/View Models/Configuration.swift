@@ -23,44 +23,16 @@
 import Foundation
 import FiservTTP
 
-//class Configuration: ObservableObject {
-//    
-//    @Published var secretKey: String = "YOUR-SECRET-KEY"
-//    @Published var apiKey: String = "YOUR-API-KEY"
-//    let environment: FiservTTPEnvironment = .Sandbox
-//    let currencyCode: String = "USD"
-//    @Published var appleTtpMerchantId: String?
-//    @Published var merchantId: String = "190009000000700"
-//    @Published var merchantName: String = "Tom's Tacos"
-//    @Published var merchantCategoryCode: String = "1000"
-//    @Published var terminalId: String = "10000001"
-//    @Published var terminalProfileId: String = "3c00e000-a009-a14f-5a63-cf156a000001"
-//}
-
-// QA - Omaha - Default
-//class Configuration: ObservableObject {
-//    @Published var secretKey: String = "W0tcspUD6AggWW2SBAz0pGvGEH22a0CrPzOCE3RkgsK"
-//    @Published var apiKey: String = "GmHGvwBTARyTwfycqV2VAV1OxFLUqt6S"
-//    let environment: FiservTTPEnvironment = .QA
-//    let currencyCode: String = "USD"
-//    @Published var appleTtpMerchantId: String?
-//    @Published var merchantId: String = "100043202016058"
-//    @Published var merchantName: String = "QAOMA-6058"
-//    @Published var merchantCategoryCode: String = "1000"
-//    @Published var terminalId: String = "10000001"
-//    @Published var terminalProfileId:String = "4c840000-0000-0000-0cf1-ed816626ccc6"
-//}
-
-// CERT - Chandler
 class Configuration: ObservableObject {
-    @Published var secretKey: String = "RnrlUlhg9ibtiwsAX84N2aEmdKDo9MhydN7BZdGuUbN"
-    @Published var apiKey: String = "zXhWhCG2PPX7ZkFOH1bx9iPxpKh5wr39"
+    
+    @Published var secretKey: String = "YOUR-SECRET-KEY"
+    @Published var apiKey: String = "YOUR-API-KEY"
     let environment: FiservTTPEnvironment = .Sandbox
     let currencyCode: String = "USD"
     @Published var appleTtpMerchantId: String?
-    @Published var merchantId: String = "100014000306019"
-    @Published var merchantName: String = "SBOX-6019"
+    @Published var merchantId: String = "190009000000700"
+    @Published var merchantName: String = "Tom's Tacos"
     @Published var merchantCategoryCode: String = "1000"
     @Published var terminalId: String = "10000001"
-    @Published var terminalProfileId:String = "4c840000-0000-0000-0cf1-ed816626ccc6"
+    @Published var terminalProfileId: String = "3c00e000-a009-a14f-5a63-cf156a000001"
 }
