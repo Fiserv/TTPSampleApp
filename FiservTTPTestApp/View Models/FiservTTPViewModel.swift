@@ -201,12 +201,9 @@ class FiservTTPViewModel: ObservableObject {
                 // WARNING
                 self.createToken = false
                 
-                if response.gatewayResponse?.transactionState == "VERIFIED" {
-                    
-                    paymentTokenHelper(from: "accountVerification:Verified",
-                                       sourceResponse: response.source,
-                                       tokensResponse: response.paymentTokens)
-                }
+                paymentTokenHelper(from: "accountVerification:Verified",
+                                   sourceResponse: response.source,
+                                   tokensResponse: response.paymentTokens)
             }
             
             await MainActor.run { self.isBusy = false }
@@ -419,11 +416,15 @@ class FiservTTPViewModel: ObservableObject {
             
             let captureFlag = refundTransactionType != .matched
             
-            // OPTIONAL WHEN refundTransactionType == .matched
-            let transactionDetailsRequest = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
+            var transactionDetailsRequest: Models.TransactionDetailsRequest?
+            
+            if refundTransactionType != .matched {
+
+                transactionDetailsRequest = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
                                                                              merchantOrderId: merchantOrderId,
                                                                              merchantInvoiceNumber: merchantInvoiceNumber,
                                                                              captureFlag: captureFlag)
+            }
             
             let response = try await self.fiservTTPCardReader.refunds(amount: bankersAmount(amount: amount),
                                                                       refundTransactionType: refundTransactionType,
@@ -590,13 +591,13 @@ class FiservTTPViewModel: ObservableObject {
         tokensResponse.forEach { token in
 
             print("** paymentTokenHelper (save token) \(from) ** ")
-            let paymentToken = Models.PaymentTokenSourceRequest.init(sourceType: "PaymentToken", // sourceResponse.sourceType ?? "",
+            let paymentToken = Models.PaymentTokenSourceRequest.init(sourceType: "PaymentToken",
                                                                      tokenData: token.tokenData ?? "",
                                                                      tokenSource: token.tokenSource ?? "",
                                                                      declineDuplicates: true,
-                                                                  card: Models.PaymentTokenCardRequest.init(
-                                                                    expirationMonth: sourceResponse.card?.expirationMonth ?? "",
-                                                                    expirationYear: sourceResponse.card?.expirationYear ?? ""))
+                                                                     card: Models.PaymentTokenCardRequest.init(
+                                                                     expirationMonth: sourceResponse.card?.expirationMonth ?? "",
+                                                                     expirationYear: sourceResponse.card?.expirationYear ?? ""))
             
             print("paymentToken.sourceType: \(paymentToken.sourceType)")
             print("paymentToken.card.expirationMonth: \(paymentToken.card.expirationMonth)")
