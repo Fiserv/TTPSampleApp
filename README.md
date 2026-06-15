@@ -28,3 +28,4 @@ You will need to make a few changes to the sample app to get it to work for you.
 The Xcode simulator supports testing Tap to Pay, but it generates an intentionally invalid payment payload, so calls to authorize will fail.  But it's a good start to see if the other calls are working for you.
 ​
 To run on a physical iPhone against our test environment, you must be logged-into the phone with a 'Sandbox' Apple Id.   Follow Apple's [instructions here](https://developer.apple.com/apple-pay/sandbox-testing/) to create a Sandbox Id.  Note that you must re-start the phone after logging-in with the Sandbox Id.
+// history rewrite cleanup
