@@ -31,11 +31,7 @@ struct RefundsView: View {
     
     @State private var amount = 0.00
     
-    @State private var merchantOrderId = ""
-    
-    @State private var merchantTransactionId = "MTID_0000001_"
-    
-    @State private var merchantInvoiceNumber = ""
+    @State private var merchantTransactionId = ""
     
     // For use in displaying the result of a readCard request
     @State private var reponseWrapper: FiservTTPResponseWrapper?
@@ -54,14 +50,10 @@ struct RefundsView: View {
             Section {
                 Text("Read Card: false, Ref required")
                 
-                // ONLY USED FOR REFERENCE
-                TextField("Your Trans Id", text: $merchantTransactionId)
-                    .keyboardType(.default)
-                
-                TextField("ReferenceTransactionId", text: $viewModel.referenceTransactionId)
-                    .keyboardType(.default)
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
+                TextField("ReferenceMerchantTransactionId", text: $viewModel.referenceMerchantTransactionId)
+                    .keyboardType(.default)
                 Button("Tagged Matched", action: {
                     taggedRefundMatched()
                 }).buttonStyle(BorderlessButtonStyle())
@@ -69,12 +61,13 @@ struct RefundsView: View {
             
             Section {
                 Text("Read Card: true, Ref required")
-                TextField("ReferenceTransactionId", text: $viewModel.referenceTransactionId)
-                    .keyboardType(.default)
-                TextField("MerchantTransactionId", text: $merchantTransactionId)
-                    .keyboardType(.default)
+                
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
+                TextField("Your Trans Id", text: $merchantTransactionId)
+                    .keyboardType(.default)
+                TextField("ReferenceMerchantTransactionId", text: $viewModel.referenceMerchantTransactionId)
+                    .keyboardType(.default)
                 Button("Tagged UnMatched", action: {
                     taggedRefundUnMatched()
                 }).buttonStyle(BorderlessButtonStyle())
@@ -82,11 +75,8 @@ struct RefundsView: View {
             
             Section {
                 Text("Read Card: true")
-                TextField("MerchantOrderId", text: $merchantOrderId)
-                    .keyboardType(.default)
-                TextField("MerchantTransactionId", text: $merchantTransactionId)
-                    .keyboardType(.default)
-                TextField("MerchantInvoiceNumber", text: $merchantInvoiceNumber)
+
+                TextField("Your Trans Id", text: $merchantTransactionId)
                     .keyboardType(.default)
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
@@ -109,12 +99,15 @@ struct RefundsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
     
+    // TAGGED MATCHED REFUNDS REQUIRES A REFERENCE VALUE
     func taggedRefundMatched() {
         Task {
             do {
                 let response = try await viewModel.refunds(amount: Decimal(self.amount),
                                                            refundTransactionType: .matched,
-                                                           referenceTransactionId: self.viewModel.referenceTransactionId)
+                                                           referenceMerchantTransactionId: self.viewModel.referenceMerchantTransactionId)
+                
+                viewModel.referenceMerchantTransactionId = ""
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Refunds [Tagged Matched]",
                                                           responseString: response.prettyJSON)
@@ -133,16 +126,18 @@ struct RefundsView: View {
     // REFERENCE TRANSACTION DETAILS    Y           Y           N
     //
     
+    // TAGGED UNMATCHED REFUNDS REQUIRES A REFERENCE VALUE
     func taggedRefundUnMatched() {
         Task {
             do {
                 let response = try await viewModel.refunds(amount: Decimal(self.amount),
                                                            refundTransactionType: .unmatched,
-                                                           // NA
-                                                           // merchantOrderId: (self.merchantOrderId.isEmpty ? nil : self.merchantOrderId),
-                                                           merchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId),
-                                                           merchantInvoiceNumber: (self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber),
-                                                           referenceTransactionId: self.viewModel.referenceTransactionId)
+                                                           merchantTransactionId: self.merchantTransactionId,
+                                                           referenceMerchantTransactionId: self.viewModel.referenceMerchantTransactionId)
+
+                self.merchantTransactionId = ""
+                
+                viewModel.referenceMerchantTransactionId = ""
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Refunds [Tagged UnMatched]",
                                                           responseString: response.prettyJSON)
@@ -157,9 +152,9 @@ struct RefundsView: View {
             do {
                 let response = try await viewModel.refunds(amount: Decimal(self.amount),
                                                            refundTransactionType: .open,
-                                                           merchantOrderId: (self.merchantOrderId.isEmpty ? nil : self.merchantOrderId),
-                                                           merchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId),
-                                                           merchantInvoiceNumber: (self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber))
+                                                           merchantTransactionId: (self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId))
+                
+                self.merchantTransactionId = ""
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Refunds [Open])",
                                                           responseString: response.prettyJSON)

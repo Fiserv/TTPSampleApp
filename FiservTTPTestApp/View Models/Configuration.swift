@@ -25,14 +25,14 @@ import FiservTTP
 
 class Configuration: ObservableObject {
     
-    @Published var ***REMOVED***: String = "YOUR-SECRET-KEY"
-    @Published var ***REMOVED***: String = "YOUR-API-KEY"
+    @Published var secretKey: String = "YOUR-SECRET-KEY"
+    @Published var apiKey: String = "YOUR-API-KEY"
     let environment: FiservTTPEnvironment = .Sandbox
     let currencyCode: String = "USD"
     @Published var appleTtpMerchantId: String?
     @Published var merchantId: String = "190009000000700"
-    @Published var merchantName: String = "Tom's Tacos"
+    @Published var merchantName: String = "MERCHANT_NAME"
     @Published var merchantCategoryCode: String = "1000"
     @Published var terminalId: String = "10000001"
-    @Published var terminalProfileId: String = "3c00e000-a009-a14f-5a63-cf156a000001"
+    @Published var terminalProfileId: String = "4c840000-0000-0000-0cf1-ed816626ccc6"
 }

@@ -31,17 +31,20 @@ class FiservTTPViewModel: ObservableObject {
     @Published var accountLinked: Bool = false
     @Published var cardValid: Bool = false
     @Published var cardReaderActive: Bool = false
-    
+    @Published var networkReady: Bool = false
+    @Published var transactionStatus: PaymentTransactionStatus = PaymentTransactionStatus(eventType: .none,
+                                                                                          transactionType: .none,
+                                                                                          refundTransactionType: .none,
+                                                                                          attempt: 0, description: "")
     @Published var expectsToken: Bool = false
     @Published var useAddress: Bool = false
     @Published var createToken: Bool = false
     
-    // USED FOR PAYMENT TYPE CAPTURE
-    @Published var authTransactionId: String?
-    // USED FOR CANCELS, RETURNS
+    // USED FOR INQUIRY, CHARGES, CANCELS, REFUNDS
     @Published var referenceTransactionId: String = ""
+    // USED FOR INQUIRY, CHARGES, CANCELS, REFUNDS
+    @Published var referenceMerchantTransactionId: String = ""
     // USED WHEN CREATE PAYMENT TYPE FLAG IS SET
-    // @Published var paymentTokenSourceRequest: Models.PaymentTokenSourceRequest?
     @Published var paymentTokens: [Models.PaymentTokenSourceRequest]?
     
     // Used to re-initialize session if lost, requires that we have already established a session at least once
@@ -52,13 +55,27 @@ class FiservTTPViewModel: ObservableObject {
     private lazy var cancellables: Set<AnyCancellable> = .init()
     
     init(configuration: Configuration) {
-
+        
         self.fiservTTPCardReader = FiservTTPCardReader.init(configuration: FiservTTPViewModel.applyConfiguration(config: configuration))
-
+        
         self.fiservTTPCardReader.sessionReadySubject
             .receive(on: DispatchQueue.main)
             .sink { sessionReady in
                 self.cardReaderActive = sessionReady
+            }
+            .store(in: &cancellables)
+        
+        self.fiservTTPCardReader.networkReadySubject
+            .receive(on: DispatchQueue.main)
+            .sink { networkReady in
+                self.networkReady = networkReady
+            }
+            .store(in: &cancellables)
+        
+        self.fiservTTPCardReader.transactionStatusSubject
+            .receive(on: DispatchQueue.main)
+            .sink { transactionStatus in
+                self.transactionStatus = transactionStatus
             }
             .store(in: &cancellables)
     }
@@ -72,7 +89,13 @@ class FiservTTPViewModel: ObservableObject {
     public func requestSessionToken() async throws {
         do {
             await MainActor.run { self.isBusy = true }
-            try await self.fiservTTPCardReader.requestSessionToken()
+            
+            // ATTENTION:
+            // https://developer.fiserv.com/product/CommerceHub/docs/Developer-Resources/API-Reference/Idempotency.mdx
+            let clientRequestId = UUID().uuidString
+            
+            try await self.fiservTTPCardReader.requestSessionToken(clientRequestId: clientRequestId)
+            
             await MainActor.run {
                 self.hasToken = true
                 self.isBusy = false
@@ -192,8 +215,13 @@ class FiservTTPViewModel: ObservableObject {
                                                                      addressRequest: addressRequest)
             }
             
+            // ATTENTION:
+            // https://developer.fiserv.com/product/CommerceHub/docs/Developer-Resources/API-Reference/Idempotency.mdx
+            let clientRequestId = UUID().uuidString
+            
             // Models.AccountVerificationResponse
-            let response = try await self.fiservTTPCardReader.accountVerification(transactionDetailsRequest: transactionDetailsRequest,
+            let response = try await self.fiservTTPCardReader.accountVerification(clientRequestId: clientRequestId,
+                                                                                  transactionDetailsRequest: transactionDetailsRequest,
                                                                                   paymentTokenSourceRequest: self.paymentTokens?.first,
                                                                                   billingAddressRequest: billingAddressRequest)
             await MainActor.run {
@@ -227,8 +255,13 @@ class FiservTTPViewModel: ObservableObject {
         
         do {
             
+            // ATTENTION:
+            // https://developer.fiserv.com/product/CommerceHub/docs/Developer-Resources/API-Reference/Idempotency.mdx
+            let clientRequestId = UUID().uuidString
+            
             // Models.TokenizeCardResponse
-            let response = try await self.fiservTTPCardReader.tokenizeCard(transactionDetailsRequest: transactionDetailsRequest)
+            let response = try await self.fiservTTPCardReader.tokenizeCard(clientRequestId: clientRequestId,
+                                                                           transactionDetailsRequest: transactionDetailsRequest)
             
             await MainActor.run {
                 
@@ -252,18 +285,24 @@ class FiservTTPViewModel: ObservableObject {
     public func transactionInquiry(referenceTransactionId: String? = nil,
                                    referenceMerchantTransactionId: String? = nil,
                                    referenceOrderId: String? = nil,
-                                   referenceMerchantOrderId: String? = nil) async throws -> [Models.InquireResponse] {
+                                   referenceMerchantOrderId: String? = nil,
+                                   referenceClientRequestId: String? = nil) async throws -> [Models.InquireResponse] {
         
         let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: referenceTransactionId,
                                                                                     referenceMerchantTransactionId: referenceMerchantTransactionId,
                                                                                     referenceOrderId: referenceOrderId,
                                                                                     referenceMerchantOrderId: referenceMerchantOrderId,
-                                                                                    referenceClientRequestId: nil)
+                                                                                    referenceClientRequestId: referenceClientRequestId)
         await MainActor.run { self.isBusy = true }
         
         do {
             
-            let response = try await self.fiservTTPCardReader.transactionInquiry(referenceTransactionDetailsRequest: referenceTransactionDetails)
+            // ATTENTION:
+            // https://developer.fiserv.com/product/CommerceHub/docs/Developer-Resources/API-Reference/Idempotency.mdx
+            let clientRequestId = UUID().uuidString
+            
+            let response = try await self.fiservTTPCardReader.transactionInquiry(clientRequestId: clientRequestId,
+                                                                                 referenceTransactionDetailsRequest: referenceTransactionDetails)
             
             await MainActor.run { self.isBusy = false }
             return response
@@ -308,7 +347,10 @@ class FiservTTPViewModel: ObservableObject {
                         referenceOrderId: String? = nil,
                         referenceMerchantOrderId: String? = nil) async throws -> Models.CommerceHubResponse {
         
-        await MainActor.run { self.isBusy = true }
+        await MainActor.run {
+            self.isBusy = true
+            self.transactionStatus = .init(eventType: .none, transactionType: transactionType, refundTransactionType: .none, attempt: 0, description: "")
+        }
         
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         
@@ -327,11 +369,19 @@ class FiservTTPViewModel: ObservableObject {
             // EXPECTS PREVIOUS AUTH
             if transactionType == .capture {
                 
-                referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: referenceTransactionId)
+                referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: referenceTransactionId,
+                                                                                        referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                                                        referenceOrderId: referenceOrderId,
+                                                                                        referenceMerchantOrderId: referenceMerchantOrderId)
             }
+        
+            // ATTENTION:
+            // https://developer.fiserv.com/product/CommerceHub/docs/Developer-Resources/API-Reference/Idempotency.mdx
+            let clientRequestId = UUID().uuidString
             
             // Models.CommerceHubResponse
-            let response = try await self.fiservTTPCardReader.charges(amount: bankersAmount(amount: amount),
+            let response = try await self.fiservTTPCardReader.charges(clientRequestId: clientRequestId,
+                                                                      amount: bankersAmount(amount: amount),
                                                                       transactionType: transactionType,
                                                                       transactionDetailsRequest: transactionDetails,
                                                                       referenceTransactionDetailsRequest: referenceTransactionDetails,
@@ -342,11 +392,13 @@ class FiservTTPViewModel: ObservableObject {
                 // WARNING
                 self.createToken = false
                 
+                // Grab the reference transactionId
+                self.referenceTransactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId ?? ""
+                self.referenceMerchantTransactionId = response.transactionDetails?.merchantTransactionId ?? ""
+                
                 // PAYMENT TYPE CAPTURE, SALE, PAYMENT TOKEN
                 if response.gatewayResponse?.transactionState == "CAPTURED" {
                     
-                    // Grab the transactionId
-                    self.referenceTransactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId ?? ""
                     // Check for Payments Tokens
                     paymentTokenHelper(from: "charges:CAPTURED",
                                        sourceResponse: response.source,
@@ -356,18 +408,10 @@ class FiservTTPViewModel: ObservableObject {
                 // PAYMENT TYPE AUTH
                 if response.gatewayResponse?.transactionState == "AUTHORIZED" {
                     
-                    // This will enable the .capture paymentType
-                    if let transactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId {
-                        
-                        // Auth can be cancelled
-                        // Grab the transactionId (and use it as an authorization)
-                        self.referenceTransactionId = transactionId
-                        self.authTransactionId = transactionId
-                        // Check for Payments Tokens
-                        paymentTokenHelper(from: "charges:AUTHORIZED",
-                                           sourceResponse: response.source,
-                                           tokensResponse: response.paymentTokens)
-                    }
+                    // Check for Payments Tokens
+                    paymentTokenHelper(from: "charges:AUTHORIZED",
+                                       sourceResponse: response.source,
+                                       tokensResponse: response.paymentTokens)
                 }
                 
                 self.isBusy = false
@@ -389,7 +433,6 @@ class FiservTTPViewModel: ObservableObject {
     // TRANSACTION DETAILS              N           Y           Y
     // REFERENCE TRANSACTION DETAILS    Y           Y           N
     
-    // NEW
     public func refunds(amount: Decimal,
                         refundTransactionType: RefundTransactionType,
                         merchantOrderId: String? = nil,
@@ -400,7 +443,10 @@ class FiservTTPViewModel: ObservableObject {
                         referenceOrderId: String? = nil,
                         referenceMerchantOrderId: String? = nil) async throws -> Models.CommerceHubResponse {
         
-        await MainActor.run { self.isBusy = true }
+        await MainActor.run {
+            self.isBusy = true
+            self.transactionStatus = .init(eventType: .none, transactionType: .none, refundTransactionType: refundTransactionType, attempt: 0, description: "")
+        }
         
         do {
             
@@ -426,12 +472,25 @@ class FiservTTPViewModel: ObservableObject {
                                                                              captureFlag: captureFlag)
             }
             
-            let response = try await self.fiservTTPCardReader.refunds(amount: bankersAmount(amount: amount),
+            // ATTENTION:
+            // https://developer.fiserv.com/product/CommerceHub/docs/Developer-Resources/API-Reference/Idempotency.mdx
+            let clientRequestId = UUID().uuidString
+            
+            let response = try await self.fiservTTPCardReader.refunds(clientRequestId: clientRequestId,
+                                                                      amount: bankersAmount(amount: amount),
                                                                       refundTransactionType: refundTransactionType,
                                                                       transactionDetails: transactionDetailsRequest,
                                                                       referenceTransactionDetails: referenceTransactionDetails)
             
-            await MainActor.run { self.isBusy = false }
+            await MainActor.run {
+                
+                // Grab the transactionId
+                self.referenceTransactionId = response.gatewayResponse?.transactionProcessingDetails?.transactionId ?? ""
+                self.referenceMerchantTransactionId = response.transactionDetails?.merchantTransactionId ?? ""
+                
+                self.isBusy = false
+            }
+            
             return response
         } catch {
             await MainActor.run { self.isBusy = false }
@@ -439,74 +498,12 @@ class FiservTTPViewModel: ObservableObject {
         }
     }
     
-    // READ CARD
-    public func readCard(amount: Decimal,
-                         merchantOrderId: String?,
-                         merchantTransactionId: String?,
-                         merchantInvoiceNumber: String?) async throws -> FiservTTPChargeResponse {
-        
-        do {
-            await MainActor.run { self.isBusy = true }
-
-            let response = try await self.fiservTTPCardReader.readCard(amount: bankersAmount(amount: amount),
-                                                                       merchantOrderId: merchantOrderId,
-                                                                       merchantTransactionId: merchantTransactionId,
-                                                                       merchantInvoiceNumber: merchantInvoiceNumber)
-            await MainActor.run { self.isBusy = false }
-            return response
-        } catch {
-            await MainActor.run { self.isBusy = false }
-            throw error
-        }
-    }
-    
-    // INQUIRY
-    public func inquiryTransaction(referenceTransactionId: String? = nil,
-                                   referenceOrderId: String? = nil,
-                                   referenceMerchantTransactionId: String? = nil,
-                                   referenceMerchantOrderId: String? = nil) async throws -> [FiservTTPChargeResponse] {
-        
-        do {
-            await MainActor.run { self.isBusy = true }
-
-            let response = try await self.fiservTTPCardReader.inquiryTransaction(referenceTransactionId: referenceTransactionId,
-                                                                                 referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                                                 referenceMerchantOrderId: referenceMerchantOrderId,
-                                                                                 referenceOrderId: referenceOrderId)
-
-            await MainActor.run { self.isBusy = false }
-            return response
-        } catch {
-            await MainActor.run { self.isBusy = false }
-            throw error
-        }
-    }
-    
-    // VOID TRANSACTION
-    public func voidTransaction(amount: Decimal,
-                                referenceTransactionId: String? = nil,
-                                referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
-        
-        do {
-            await MainActor.run { self.isBusy = true }
-
-            let response = try await self.fiservTTPCardReader.voidTransaction(amount: bankersAmount(amount: amount),
-                                                                              referenceTransactionId: referenceTransactionId,
-                                                                              referenceMerchantTransactionId: referenceMerchantTransactionId)
-            await MainActor.run { self.isBusy = false }
-            return response
-        } catch {
-            await MainActor.run { self.isBusy = false }
-            throw error
-        }
-    }
-    
-    // NEW
     public func cancels(amount: Decimal,
                         referenceTransactionId: String? = nil,
                         referenceOrderId: String? = nil,
                         referenceMerchantTransactionId: String? = nil,
-                        referenceMerchantOrderId: String? = nil) async throws -> Models.CommerceHubResponse {
+                        referenceMerchantOrderId: String? = nil,
+                        referenceClientRequestId: String? = nil) async throws -> Models.CommerceHubResponse {
         
         let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: referenceTransactionId,
                                                                                     referenceMerchantTransactionId: referenceMerchantTransactionId,
@@ -515,55 +512,14 @@ class FiservTTPViewModel: ObservableObject {
         await MainActor.run { self.isBusy = true }
         
         do {
+
+            // ATTENTION:
+            // https://developer.fiserv.com/product/CommerceHub/docs/Developer-Resources/API-Reference/Idempotency.mdx
+            let clientRequestId = UUID().uuidString
             
-            let response = try await self.fiservTTPCardReader.cancels(amount: bankersAmount(amount: amount),
+            let response = try await self.fiservTTPCardReader.cancels(clientRequestId: clientRequestId,
+                                                                      amount: bankersAmount(amount: amount),
                                                                       referenceTransactionDetailsRequest: referenceTransactionDetails)
-            
-            await MainActor.run { self.isBusy = false }
-            return response
-        } catch {
-            await MainActor.run { self.isBusy = false }
-            throw error
-        }
-    }
-    
-    // REFUND CARD
-    public func refundCard(amount: Decimal,
-                           merchantOrderId: String? = nil,
-                           merchantTransactionId: String? = nil,
-                           merchantInvoiceNumber: String? = nil,
-                           referenceTransactionId: String? = nil,
-                           referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
-            
-        do {
-            await MainActor.run { self.isBusy = true }
-             
-            let response = try await self.fiservTTPCardReader.refundCard(amount: bankersAmount(amount: amount),
-                                                                         merchantOrderId: merchantOrderId,
-                                                                         merchantTransactionId: merchantTransactionId,
-                                                                         merchantInvoiceNumber: merchantInvoiceNumber,
-                                                                         referenceTransactionId: referenceTransactionId,
-                                                                         referenceMerchantTransactionId: referenceMerchantTransactionId)
-            
-            await MainActor.run { self.isBusy = false }
-            return response
-        } catch {
-            await MainActor.run { self.isBusy = false }
-            throw error
-        }
-    }
-    
-    // REFUND TRANSACTION
-    public func refundTransaction(amount: Decimal,
-                                  referenceTransactionId: String? = nil,
-                                  referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
-        
-        do {
-            await MainActor.run { self.isBusy = true }
-             
-            let response = try await self.fiservTTPCardReader.refundTransaction(amount: bankersAmount(amount: amount),
-                                                                                referenceTransactionId: referenceTransactionId,
-                                                                                referenceMerchantTransactionId: referenceMerchantTransactionId)
             
             await MainActor.run { self.isBusy = false }
             return response
@@ -590,7 +546,6 @@ class FiservTTPViewModel: ObservableObject {
         
         tokensResponse.forEach { token in
 
-            print("** paymentTokenHelper (save token) \(from) ** ")
             let paymentToken = Models.PaymentTokenSourceRequest.init(sourceType: "PaymentToken",
                                                                      tokenData: token.tokenData ?? "",
                                                                      tokenSource: token.tokenSource ?? "",
@@ -598,12 +553,6 @@ class FiservTTPViewModel: ObservableObject {
                                                                      card: Models.PaymentTokenCardRequest.init(
                                                                      expirationMonth: sourceResponse.card?.expirationMonth ?? "",
                                                                      expirationYear: sourceResponse.card?.expirationYear ?? ""))
-            
-            print("paymentToken.sourceType: \(paymentToken.sourceType)")
-            print("paymentToken.card.expirationMonth: \(paymentToken.card.expirationMonth)")
-            print("paymentToken.card.expirationYear: \(paymentToken.card.expirationYear)")
-            print("paymentToken.tokenData: \(paymentToken.tokenData)")
-            print("paymentToken.tokenSource: \(paymentToken.tokenSource)")
             
             self.paymentTokens?.append(paymentToken)
         }
@@ -629,8 +578,8 @@ extension FiservTTPViewModel {
 
     static func applyConfiguration(config: Configuration) -> FiservTTPConfig {
 
-        return FiservTTPConfig.init(***REMOVED***: config.***REMOVED***,
-                                    ***REMOVED***: config.***REMOVED***,
+        return FiservTTPConfig.init(secretKey: config.secretKey,
+                                    apiKey: config.apiKey,
                                     environment: config.environment,
                                     currencyCode: config.currencyCode,
                                     merchantId: config.merchantId,
