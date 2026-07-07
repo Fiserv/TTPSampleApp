@@ -38,13 +38,13 @@ struct ConfigurationView: View {
                     
                     VStack(alignment: .leading) {
                         Text("API Key")
-                        TextField("API Key:", text: $configuration.***REMOVED***)
+                        TextField("API Key:", text: $configuration.apiKey)
                             .foregroundColor(.blue)
                         
                         Divider()
                         
                         Text("Secret Key")
-                        TextField("Secret Key:", text: $configuration.***REMOVED***)
+                        TextField("Secret Key:", text: $configuration.secretKey)
                             .foregroundColor(.blue)
                     }
                     .autocorrectionDisabled()
@@ -114,7 +114,7 @@ struct ConfigurationView: View {
                         isPresented = false
                     } label: {
                         
-                        Text("Application v1.1.1")
+                        Text("Application v1.1.2")
                         
                         Text("Done")
                     }

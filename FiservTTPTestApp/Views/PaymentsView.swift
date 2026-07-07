@@ -37,9 +37,7 @@ struct PaymentsView: View {
     // Error handling and displaying
     @State private var errorWrapper: FiservTTPErrorWrapper?
     
-    @State private var merchantOrderId: String = ""
     @State private var merchantTransactionId: String = ""
-    @State private var merchantInvoiceNumber: String = ""
     
     var body: some View {
         Form {
@@ -53,16 +51,19 @@ struct PaymentsView: View {
                 }).buttonStyle(BorderlessButtonStyle())
             }
             
-            Section {
-                TextField("MerchantOrderId", text: $merchantOrderId)
-                TextField("MerchantTransactionId", text: $merchantTransactionId)
-                TextField("MerchantInvoiceNumber", text: $merchantInvoiceNumber)
-            }
+//            Section {
+//                if viewModel.transactionStatus.transactionType == .auth && viewModel.transactionStatus.eventType != .none {
+//                    Text(viewModel.transactionStatus.description)
+//                        .foregroundStyle(.red)
+//                }
+//            }
             
             Section {
                 Text("Read Card: true, captureFlag: false")
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
+                TextField("Your Trans Id", text: $merchantTransactionId)
+                    .keyboardType(.default)
                 Toggle(isOn: $viewModel.createToken) {
                     Text("Create Payment Token")
                 }
@@ -75,7 +76,8 @@ struct PaymentsView: View {
                 Text("Read Card: false, captureFlag: false \nExpects previous payment token")
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
-                
+                TextField("Your Trans Id", text: $merchantTransactionId)
+                    .keyboardType(.default)
                 Button("Auth using Payment Token", action: {
                     auth(fromToken: true)
                 }).buttonStyle(BorderlessButtonStyle())
@@ -85,6 +87,14 @@ struct PaymentsView: View {
                 Text("Read Card: false, captureFlage: true \nExpects previous authorization\nSessionless")
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
+                TextField("Your Trans Id", text: $merchantTransactionId)
+                    .keyboardType(.default)
+                TextField("ReferenceMerchantTransactionId", text: $viewModel.referenceMerchantTransactionId)
+                    .keyboardType(.default)
+                if viewModel.transactionStatus.transactionType == .capture && viewModel.transactionStatus.eventType != .none {
+                    Text(viewModel.transactionStatus.description)
+                        .foregroundStyle(.red)
+                }
                 Button("Sale (Capture from Auth)", action: {
                     capture()
                 }).buttonStyle(BorderlessButtonStyle())
@@ -94,6 +104,12 @@ struct PaymentsView: View {
                 Text("Read Card: false, captureFlage: true \nExpects previous payment token\nSessionless")
                 TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
+                TextField("Your Trans Id", text: $merchantTransactionId)
+                    .keyboardType(.default)
+                if viewModel.transactionStatus.transactionType == .paymentToken && viewModel.transactionStatus.eventType != .none {
+                    Text(viewModel.transactionStatus.description)
+                        .foregroundStyle(.red)
+                }
                 Button("Sale (Payment Token)", action: {
                     paymentToken()
                 }).buttonStyle(BorderlessButtonStyle())
@@ -105,6 +121,12 @@ struct PaymentsView: View {
                     .keyboardType(.decimalPad)
                 Toggle(isOn: $viewModel.createToken) {
                     Text("Create Payment Token")
+                }
+                TextField("Your Trans Id", text: $merchantTransactionId)
+                    .keyboardType(.default)
+                if viewModel.transactionStatus.transactionType == .sale && viewModel.transactionStatus.eventType != .none {
+                    Text(viewModel.transactionStatus.description)
+                        .foregroundStyle(.red)
                 }
                 Button("Sale (Read Card)", action: {
                     sale()
@@ -136,9 +158,9 @@ struct PaymentsView: View {
                 let response =  try await viewModel.charges(amount: Decimal(self.amount),
                                                             createPaymentToken: viewModel.createToken,
                                                             transactionType: PaymentTransactionType.sale,
-                                                            merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
-                                                            merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
-                                                            merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber)
+                                                            merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId)
+                
+                self.merchantTransactionId = ""
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Sale",
                                                           responseString: response.prettyJSON)
@@ -149,6 +171,7 @@ struct PaymentsView: View {
         }
     }
     
+    // AUTHORIZATIONS FROM A PAYMENT TOKEN REQUIRES A REFERENCE VALUE
     func auth(fromToken: Bool) {
         
         if fromToken == true && viewModel.paymentTokens == nil {
@@ -164,9 +187,8 @@ struct PaymentsView: View {
                                                             createPaymentToken: fromToken ? false : viewModel.createToken,
                                                             transactionType: PaymentTransactionType.auth,
                                                             paymentTokenSource: fromToken ? viewModel.paymentTokens?.first : nil,
-                                                            merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
-                                                            merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
-                                                            merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber)
+                                                            merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId)
+                self.merchantTransactionId = ""
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Auth",
                                                           responseString: response.prettyJSON)
@@ -177,16 +199,18 @@ struct PaymentsView: View {
         }
     }
     
+    // CAPTURE FROM AN AUTHORIZATION REQUIRES A REFERENCE VALUE
     func capture() {
         
         Task {
             do {
                 let response = try await viewModel.charges(amount: Decimal(self.amount),
                                                            transactionType: PaymentTransactionType.capture,
-                                                           merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
                                                            merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
-                                                           merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber,
-                                                           referenceTransactionId: viewModel.authTransactionId)
+                                                           referenceMerchantTransactionId: viewModel.referenceMerchantTransactionId)
+                self.merchantTransactionId = ""
+                
+                // viewModel.referenceMerchantTransactionId = ""
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Capture",
                                                           responseString: response.prettyJSON)
@@ -197,6 +221,7 @@ struct PaymentsView: View {
         }
     }
     
+    // SALE FROM PAYMENT TOKEN REQUIRES A REFERENCE VALUE
     func paymentToken() {
         
         if viewModel.paymentTokens == nil {
@@ -211,9 +236,9 @@ struct PaymentsView: View {
                 let response = try await viewModel.charges(amount: Decimal(self.amount),
                                                            transactionType: PaymentTransactionType.paymentToken,
                                                            paymentTokenSource: viewModel.paymentTokens?.first,
-                                                           merchantOrderId: self.merchantOrderId.isEmpty ? nil : self.merchantOrderId,
-                                                           merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId,
-                                                           merchantInvoiceNumber: self.merchantInvoiceNumber.isEmpty ? nil : self.merchantInvoiceNumber)
+                                                           merchantTransactionId: self.merchantTransactionId.isEmpty ? nil : self.merchantTransactionId)
+                
+                self.merchantTransactionId = ""
                 
                 reponseWrapper = FiservTTPResponseWrapper(title: "Payment Token",
                                                           responseString: response.prettyJSON)
